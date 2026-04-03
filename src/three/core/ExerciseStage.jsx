@@ -24,6 +24,10 @@ export default function ExerciseStage({ type, clips }) {
     if (!fbxDebug) return ''
     return JSON.stringify(fbxDebug, null, 2)
   }, [fbxDebug])
+  const isEditMode = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('edit') === '1'
+  }, [])
 
   const clipNames = useMemo(
     () => (fbxDebug?.clips || []).map((clip) => clip.name).filter(Boolean),
@@ -110,40 +114,44 @@ export default function ExerciseStage({ type, clips }) {
         </Canvas>
       </div>
 
-      <div className="fbx-debug-tools">
-        <div className="fbx-play-controls">
-          <label>
-            Clip FBX
-            <select
-              value={selectedClipName}
-              onChange={(event) => {
-                setSelectedClipName(event.target.value)
-                setIsPlayingClip(true)
-              }}
-              disabled={!clipNames.length}
-            >
-              {clipNames.length ? (
-                clipNames.map((name) => (
-                  <option key={name} value={name}>{name}</option>
-                ))
-              ) : (
-                <option value="">Nessuna clip</option>
-              )}
-            </select>
-          </label>
-          <div className="fbx-play-buttons">
-            <button type="button" onClick={() => setIsPlayingClip(true)} disabled={!clipNames.length}>Play</button>
-            <button type="button" onClick={() => setIsPlayingClip(false)} disabled={!clipNames.length}>Stop</button>
+      {isEditMode ? (
+        <>
+          <div className="fbx-debug-tools">
+            <div className="fbx-play-controls">
+              <label>
+                Clip FBX
+                <select
+                  value={selectedClipName}
+                  onChange={(event) => {
+                    setSelectedClipName(event.target.value)
+                    setIsPlayingClip(true)
+                  }}
+                  disabled={!clipNames.length}
+                >
+                  {clipNames.length ? (
+                    clipNames.map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))
+                  ) : (
+                    <option value="">Nessuna clip</option>
+                  )}
+                </select>
+              </label>
+              <div className="fbx-play-buttons">
+                <button type="button" onClick={() => setIsPlayingClip(true)} disabled={!clipNames.length}>Play</button>
+                <button type="button" onClick={() => setIsPlayingClip(false)} disabled={!clipNames.length}>Stop</button>
+              </div>
+            </div>
+
+            <button type="button" onClick={() => setShowFbxJson((v) => !v)}>
+              {showFbxJson ? 'Nascondi Struttura FBX JSON' : 'Mostra Struttura FBX JSON'}
+            </button>
           </div>
-        </div>
 
-        <button type="button" onClick={() => setShowFbxJson((v) => !v)}>
-          {showFbxJson ? 'Nascondi Struttura FBX JSON' : 'Mostra Struttura FBX JSON'}
-        </button>
-      </div>
-
-      {showFbxJson ? (
-        <pre className="fbx-debug-json">{fbxJson || 'FBX non ancora caricato...'}</pre>
+          {showFbxJson ? (
+            <pre className="fbx-debug-json">{fbxJson || 'FBX non ancora caricato...'}</pre>
+          ) : null}
+        </>
       ) : null}
     </div>
   )

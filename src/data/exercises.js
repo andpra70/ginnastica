@@ -5,10 +5,50 @@ export const levelRank = {
 }
 
 export const warmupSteps = [
-  { name: 'Mobilita collo e spalle', duration: '2 min', cue: 'Movimenti lenti, ampiezza progressiva.' },
-  { name: 'Circonduzioni anche e ginocchia', duration: '2 min', cue: 'Mantieni addome attivo e schiena neutra.' },
-  { name: 'Jumping jack leggeri', duration: '2 min', cue: 'Respira ritmicamente, non irrigidire le spalle.' },
-  { name: 'Plank dinamico corto', duration: '2 min', cue: 'Attiva core e glutei prima del lavoro principale.' }
+  {
+    id: 'warmup-neck-shoulder',
+    name: 'Mobilita collo e spalle',
+    durationMin: 2,
+    cue: 'Movimenti lenti, ampiezza progressiva.',
+    detail: [
+      'Ruota collo e spalle senza scatti.',
+      'Progressione da ROM piccolo a ROM medio.',
+      'Respirazione diaframmatica continua.'
+    ]
+  },
+  {
+    id: 'warmup-hips-knees',
+    name: 'Circonduzioni anche e ginocchia',
+    durationMin: 2,
+    cue: 'Mantieni addome attivo e schiena neutra.',
+    detail: [
+      'Focus su controllo del bacino.',
+      'Ginocchia in asse durante la rotazione.',
+      'Evita compensi lombari.'
+    ]
+  },
+  {
+    id: 'warmup-jj',
+    name: 'Jumping jack leggeri',
+    durationMin: 2,
+    cue: 'Respira ritmicamente, non irrigidire le spalle.',
+    detail: [
+      'Intensita progressiva 50% → 70%.',
+      'Atterraggio morbido su avampiede.',
+      'Spalle decontratte.'
+    ]
+  },
+  {
+    id: 'warmup-dynamic-plank',
+    name: 'Plank dinamico corto',
+    durationMin: 2,
+    cue: 'Attiva core e glutei prima del lavoro principale.',
+    detail: [
+      'Alterna plank alto/basso con controllo.',
+      'Bacino stabile, evita torsioni.',
+      'Espira nella fase di spinta.'
+    ]
+  }
 ]
 
 const EXERCISE_VIDEO_URL = 'https://www.youtube.com/watch?v=uTYNPadVdic'
@@ -272,6 +312,57 @@ export const exercises = rawExercises.map((exercise) => {
     }
   }
 })
+
+export const stretchingExercises = [
+  {
+    id: 'stretch-hip-flexor',
+    name: 'Stretch Flessori Anca',
+    type: 'Stretching Post Workout',
+    durationMin: 3,
+    execution: [
+      'Affondo statico con bacino in retroversione.',
+      'Mantieni busto verticale e gluteo posteriore attivo.',
+      'Cambia lato a meta tempo.'
+    ],
+    mistakes: [
+      'Iperestensione lombare per cercare profondita.',
+      'Ginocchio anteriore che collassa verso interno.'
+    ],
+    breathing: 'Respiri lenti: 4 secondi inspiro, 6 secondi espiro.'
+  },
+  {
+    id: 'stretch-hamstring',
+    name: 'Stretch Catena Posteriore',
+    type: 'Stretching Post Workout',
+    durationMin: 3,
+    execution: [
+      'Piede su supporto basso, schiena lunga.',
+      'Inclina il busto dall anca senza curvare la schiena.',
+      'Mantieni tensione moderata, non dolorosa.'
+    ],
+    mistakes: [
+      'Rimbalzi rapidi.',
+      'Spalle chiuse e trattenimento del respiro.'
+    ],
+    breathing: 'Espira durante l allungamento, inspira in tenuta.'
+  },
+  {
+    id: 'stretch-chest-shoulder',
+    name: 'Stretch Petto e Spalle',
+    type: 'Stretching Post Workout',
+    durationMin: 2,
+    execution: [
+      'Appoggia avambraccio a parete a 90 gradi.',
+      'Ruota lentamente il busto in apertura.',
+      'Ripeti su entrambi i lati.'
+    ],
+    mistakes: [
+      'Eccessiva protrazione del collo.',
+      'Spinta troppo aggressiva della spalla.'
+    ],
+    breathing: 'Respira lento e continuo senza apnea.'
+  }
+]
 
 export function buildWorkout(durationMin, selectedLevel) {
   const available = exercises.filter((ex) => levelRank[ex.level] <= levelRank[selectedLevel])
