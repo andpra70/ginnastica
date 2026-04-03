@@ -36,19 +36,11 @@ function configureMap(texture, isColor = false) {
 }
 
 function normalizeModelPose(model) {
+  model.rotation.set(0, 0, 0)
   const box = new Box3().setFromObject(model)
   if (box.isEmpty()) return
 
-  const size = new Vector3()
   const center = new Vector3()
-  box.getSize(size)
-
-  // Some FBX assets are authored as Z-up: rotate once so camera and controls use Y-up.
-  if (size.z > size.y * 1.15) {
-    model.rotation.x = -Math.PI / 2
-    model.updateMatrixWorld(true)
-    box.setFromObject(model)
-  }
 
   box.getCenter(center)
   model.position.x -= center.x
