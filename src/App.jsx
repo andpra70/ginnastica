@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
-import RegionVideoGrabber from './components/RegionVideoGrabber'
 import calistenichsConfig from './config/calistenichs.json'
 import pilatesConfig from './config/pilates.json'
 
@@ -536,7 +535,6 @@ export default function App() {
               <div className="burger-menu">
                 <button type="button" className={activeView === 'trainer' ? 'active' : ''} onClick={() => { setActiveView('trainer'); setMenuOpen(false) }}>Trainer</button>
                 <button type="button" className={activeView === 'video' ? 'active' : ''} onClick={() => { setActiveView('video'); setMenuOpen(false) }}>Video Editor</button>
-                <button type="button" className={activeView === 'grabber' ? 'active' : ''} onClick={() => { setActiveView('grabber'); setMenuOpen(false) }}>Grabber</button>
                 {activeView === 'trainer' ? (
                   <label className="burger-level">
                     Training
@@ -682,8 +680,6 @@ export default function App() {
           {videoEditorCard ? <ExerciseVideoLoop exercise={videoEditorCard} videoSources={appConfig.videoSources || []} /> : null}
         </section>
       ) : null}
-
-      {activeView === 'grabber' ? <RegionVideoGrabber /> : null}
 
       <footer className="app-footer">
         <div className="brand-logo" aria-hidden>GT</div>
