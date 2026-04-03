@@ -72,12 +72,21 @@ function CardViewer({ card }) {
   if (card.viewerType === 'video') {
     const id = parseYouTubeVideoId(card.video?.url)
     if (!id) return <div className="figure-card">Video non configurato</div>
-    const start = Number(card.video?.start || 0)
+    const start = Math.max(0, Number(card.video?.start || 0))
+    const end = Math.max(start + 1, Number(card.video?.end || start + 20))
+    const params = new URLSearchParams({
+      start: String(Math.floor(start)),
+      end: String(Math.floor(end)),
+      rel: '0',
+      playsinline: '1',
+      loop: '1',
+      playlist: id
+    })
     return (
       <div className="figure-card figure-card-3d">
         <iframe
           title={`video-${card.id}`}
-          src={`https://www.youtube.com/embed/${id}?start=${Math.max(0, Math.floor(start))}&rel=0&playsinline=1`}
+          src={`https://www.youtube.com/embed/${id}?${params.toString()}`}
           allow="autoplay; encrypted-media; picture-in-picture"
           allowFullScreen
           style={{ width: '100%', height: '100%', border: 0 }}
