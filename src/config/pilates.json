@@ -273,7 +273,9 @@
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "cameraView": null,
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/claudia/Woman2.fbx"
       },
       {
         "id": "pilates-spine-stretch",
@@ -638,7 +640,9 @@
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "cameraView": null,
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/claudia/Woman2.fbx"
       },
       {
         "id": "pilates-spine-stretch",
