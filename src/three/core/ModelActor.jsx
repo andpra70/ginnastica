@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import FBXActor from './FBXActor'
 import GLTFActor from './GLTFActor'
 
-export default function ModelActor({ modelPath, clips = [], config, onModelDebug, playbackControls }) {
+export default function ModelActor({ modelPath, config, onModelDebug, playbackControls }) {
   const lower = modelPath.toLowerCase()
   const isFbx = lower.endsWith('.fbx')
 
@@ -14,7 +14,6 @@ export default function ModelActor({ modelPath, clips = [], config, onModelDebug
     return (
       <FBXActor
         modelPath={modelPath}
-        clips={clips}
         config={config}
         onModelDebug={onModelDebug}
         playbackControls={playbackControls}
@@ -22,5 +21,5 @@ export default function ModelActor({ modelPath, clips = [], config, onModelDebug
     )
   }
 
-  return <GLTFActor modelPath={modelPath} clips={clips} config={config} playbackControls={playbackControls} />
+  return <GLTFActor modelPath={modelPath} config={config} playbackControls={playbackControls} />
 }

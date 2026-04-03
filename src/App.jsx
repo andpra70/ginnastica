@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
 import calistenichsConfig from './config/calistenichs.json'
@@ -121,6 +121,10 @@ function getSegmentsStorageKey(trainingKey) {
   return `ginnastica.program.videoSegments.${trainingKey}`
 }
 
+function getCameraViewsStorageKey(trainingKey) {
+  return `ginnastica.program.cameraViews.${trainingKey}`
+}
+
 function readSavedProgramCards(trainingKey) {
   if (typeof window === 'undefined') return null
   try {
@@ -169,6 +173,38 @@ function readStoredVideoSegments(trainingKey) {
   }
 }
 
+function readStoredCameraViews(trainingKey) {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(getCameraViewsStorageKey(trainingKey))
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return parsed && typeof parsed === 'object' ? parsed : {}
+    }
+
+    const programRaw = window.localStorage.getItem(getProgramStorageKey(trainingKey))
+      || (trainingKey === 'calistenichs' ? window.localStorage.getItem('ginnastica.program.json') : null)
+    if (!programRaw) return {}
+    const programParsed = JSON.parse(programRaw)
+    const cameraViews = programParsed?.cameraViews
+    return cameraViews && typeof cameraViews === 'object' ? cameraViews : {}
+  } catch {
+    return {}
+  }
+}
+
+function normalizeCameraView(cameraView) {
+  if (!cameraView || typeof cameraView !== 'object') return null
+  const camera = Array.isArray(cameraView.camera) ? cameraView.camera.map(Number) : null
+  const target = Array.isArray(cameraView.target) ? cameraView.target.map(Number) : null
+  if (!camera || !target || camera.length !== 3 || target.length !== 3) return null
+  if (![...camera, ...target].every((v) => Number.isFinite(v))) return null
+  return {
+    camera: camera.map((v) => Number(v.toFixed(3))),
+    target: target.map((v) => Number(v.toFixed(3)))
+  }
+}
+
 function getSavedVideoSegment(cardId, defaultVideoUrl, storedSegments = {}) {
   const fromProgram = storedSegments?.[cardId]
   if (fromProgram && typeof fromProgram === 'object') {
@@ -196,6 +232,33 @@ function getSavedVideoSegment(cardId, defaultVideoUrl, storedSegments = {}) {
   } catch {
     return { url: defaultVideoUrl, start: 0, end: 20 }
   }
+}
+
+function getSavedCameraView(cardId, animationType, storedCameraViews = {}) {
+  const fromStored = normalizeCameraView(storedCameraViews?.[cardId])
+  if (fromStored) return fromStored
+  if (typeof window === 'undefined') return null
+
+  try {
+    const legacyByCardRaw = window.localStorage.getItem(`ginnastica.camera.card.${cardId}`)
+    if (legacyByCardRaw) {
+      const legacyByCard = normalizeCameraView(JSON.parse(legacyByCardRaw))
+      if (legacyByCard) return legacyByCard
+    }
+  } catch {
+    // ignore malformed legacy payload
+  }
+
+  try {
+    const legacyByTypeRaw = window.localStorage.getItem(`ginnastica.camera.${animationType}`)
+    if (legacyByTypeRaw) {
+      const legacyByType = normalizeCameraView(JSON.parse(legacyByTypeRaw))
+      if (legacyByType) return legacyByType
+    }
+  } catch {
+    // ignore malformed legacy payload
+  }
+  return null
 }
 
 function SegmentVideoViewer({ cardId, videoSegment }) {
@@ -284,37 +347,47 @@ function CardViewer({ card }) {
       </div>
     )
   }
-  return <ExerciseRenderer type={card.animationType} />
+  return (
+    <ExerciseRenderer
+      cardId={card.id}
+      type={card.animationType}
+      cameraView={card.cameraView}
+      onCameraSaved={(payload) => card.onCameraSaved?.(card.id, payload)}
+      clipName={card.clipName}
+      onClipSelected={(value) => card.onClipSelected?.(card.id, value)}
+    />
+  )
 }
 
 function ProgramCard({ card }) {
   return (
     <section className="panel compact-panel detail program-card">
       <div className="detail-head">
-        <div>
+        <div className="card-meta-col">
           <p className="hint">Classe: {card.classKey}</p>
           <div className="title-inline">
             <h3>{card.name}</h3>
             <p className="timer-chip">Timer scheda: {formatTime(card.durationScaledSec)}</p>
           </div>
           <p className="hint">{card.type} • {card.setsScaled} serie • {card.repsScaled || card.reps}</p>
+          <p className="hint">Clip FBX: {card.clipName || '-'}</p>
+
+          <div className="vertical-sections">
+            <article>
+              <h4>Esecuzione</h4>
+              <ul>{(card.execution || []).map((item) => <li key={item}>{item}</li>)}</ul>
+            </article>
+            <article>
+              <h4>Errori</h4>
+              <ul>{(card.mistakes || []).map((item) => <li key={item}>{item}</li>)}</ul>
+            </article>
+            <article>
+              <h4>Respirazione</h4>
+              <p>{card.breathing}</p>
+            </article>
+          </div>
         </div>
         <CardViewer card={card} />
-      </div>
-
-      <div className="vertical-sections">
-        <article>
-          <h4>Esecuzione</h4>
-          <ul>{(card.execution || []).map((item) => <li key={item}>{item}</li>)}</ul>
-        </article>
-        <article>
-          <h4>Errori</h4>
-          <ul>{(card.mistakes || []).map((item) => <li key={item}>{item}</li>)}</ul>
-        </article>
-        <article>
-          <h4>Respirazione</h4>
-          <p>{card.breathing}</p>
-        </article>
       </div>
     </section>
   )
@@ -349,6 +422,7 @@ export default function App() {
   const allCfg = appConfig?.allenamento || {}
   const defaultVideoUrl = appConfig.videoSources?.[0] || ''
   const [storedSegments, setStoredSegments] = useState({})
+  const [storedCameraViews, setStoredCameraViews] = useState({})
   const levels = allCfg.livelli || {}
   const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
   const splashUrlMode = getSplashModeFromUrl()
@@ -369,6 +443,8 @@ export default function App() {
 
     const segments = readStoredVideoSegments(trainingKey)
     setStoredSegments(segments)
+    const cameraViews = readStoredCameraViews(trainingKey)
+    setStoredCameraViews(cameraViews)
     setPlayMode(false)
     setPlayRunning(false)
     setPlayIndex(0)
@@ -399,12 +475,13 @@ export default function App() {
       programCardsBase.map((card) => ({
         ...card,
         videoSegment: getSavedVideoSegment(card.id, defaultVideoUrl, storedSegments),
+        cameraView: getSavedCameraView(card.id, card.animationType, storedCameraViews),
         setsScaled: Math.max(1, Math.round((card.sets || 1) * setMultiplier)),
         durationScaledSec: Math.max(20, Math.round((card.durationSec || 60) * durationMultiplier)),
         repsScaled: scaleReps(card.reps || '', durationMultiplier)
       }))
     )
-  }, [programCardsBase, levelCfg, defaultVideoUrl, storedSegments])
+  }, [programCardsBase, levelCfg, defaultVideoUrl, storedSegments, storedCameraViews])
 
   const [selectedCardId, setSelectedCardId] = useState(programCards[0]?.id || '')
 
@@ -423,11 +500,11 @@ export default function App() {
     if (!playMode) {
       setPlayIndex(0)
       setTotalRemaining(totalProgramSec)
-      setCurrentRemaining(programCards[0]?.durationScaledSec || 0)
+      setCurrentRemaining(selectedCard?.durationScaledSec || 0)
       return
     }
     if (currentRemaining <= 0) setCurrentRemaining(programCards[playIndex]?.durationScaledSec || 0)
-  }, [playMode, totalProgramSec, programCards, playIndex, currentRemaining])
+  }, [playMode, totalProgramSec, programCards, playIndex, currentRemaining, selectedCard])
 
   useEffect(() => {
     if (!playMode || !playRunning) return undefined
@@ -452,7 +529,7 @@ export default function App() {
     return () => window.clearInterval(id)
   }, [playMode, playRunning, programCards])
 
-  const currentCard = programCards[playIndex]
+  const currentCard = playMode ? programCards[playIndex] : selectedCard
 
   const startPlay = () => {
     if (!programCards.length) return
@@ -469,8 +546,34 @@ export default function App() {
     setPlayRunning(false)
     setPlayIndex(0)
     setTotalRemaining(totalProgramSec)
-    setCurrentRemaining(programCards[0]?.durationScaledSec || 0)
+    setCurrentRemaining(selectedCard?.durationScaledSec || 0)
   }
+
+  const handleCameraSaved = useCallback((cardId, viewPayload) => {
+    const normalized = normalizeCameraView(viewPayload)
+    if (!normalized) return
+    setStoredCameraViews((prev) => {
+      const next = {
+        ...prev,
+        [cardId]: {
+          ...normalized,
+          savedAt: new Date().toISOString()
+        }
+      }
+      try {
+        window.localStorage.setItem(getCameraViewsStorageKey(trainingKey), JSON.stringify(next))
+        window.localStorage.setItem(`ginnastica.camera.card.${cardId}`, JSON.stringify(next[cardId]))
+      } catch {
+        // ignore storage errors
+      }
+      return next
+    })
+  }, [trainingKey])
+
+  const handleClipSelected = useCallback((cardId, clipName) => {
+    if (!clipName) return
+    setProgramCardsBase((cards) => cards.map((c) => (c.id === cardId ? { ...c, clipName } : c)))
+  }, [])
 
   const saveProgramJson = () => {
     const storageSegments = readStoredVideoSegments(trainingKey)
@@ -486,10 +589,21 @@ export default function App() {
     const videoSegments = { ...computedSegments, ...storageSegments }
     window.localStorage.setItem(getSegmentsStorageKey(trainingKey), JSON.stringify(videoSegments))
     setStoredSegments(videoSegments)
+    const storageCameraViews = readStoredCameraViews(trainingKey)
+    const computedCameraViews = {}
+    for (const card of programCards) {
+      const view = normalizeCameraView(card.cameraView)
+      if (!view) continue
+      computedCameraViews[card.id] = view
+    }
+    const cameraViews = { ...storageCameraViews, ...computedCameraViews }
+    window.localStorage.setItem(getCameraViewsStorageKey(trainingKey), JSON.stringify(cameraViews))
+    setStoredCameraViews(cameraViews)
 
     const payload = {
       ...toExportProgram(programCardsBase, levels, appConfig.videoSources || []),
-      videoSegments
+      videoSegments,
+      cameraViews
     }
     localStorage.setItem(getProgramStorageKey(trainingKey), JSON.stringify(payload))
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
@@ -626,9 +740,9 @@ export default function App() {
           </section>
 
           {playMode ? (
-            currentCard ? <ProgramCard card={currentCard} /> : null
+            currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected }} /> : null
           ) : (
-            selectedCard ? <ProgramCard card={selectedCard} /> : null
+            selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected }} /> : null
           )}
 
           {isEditMode && selectedCard ? (
@@ -650,6 +764,7 @@ export default function App() {
                   </select>
                 </label>
                 <label>animationType<input value={selectedCard.animationType} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, animationType: e.target.value } : c))} /></label>
+                <label>Clip FBX<input value={selectedCard.clipName || ''} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, clipName: e.target.value } : c))} /></label>
                 <label>Type<input value={selectedCard.type} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, type: e.target.value } : c))} /></label>
                 <label>Durata (sec)<input type="number" value={selectedCard.durationSec} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, durationSec: Number(e.target.value) || 0 } : c))} /></label>
                 <label>Serie<input type="number" value={selectedCard.sets} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, sets: Number(e.target.value) || 1 } : c))} /></label>

@@ -3,7 +3,7 @@ import { useAnimations, useGLTF } from '@react-three/drei'
 import useClipPlayback from './useClipPlayback'
 import resolveAssetPath from './resolveAssetPath'
 
-export default function GLTFActor({ modelPath, clips = [], config, playbackControls }) {
+export default function GLTFActor({ modelPath, config, playbackControls }) {
   const resolvedModelPath = useMemo(() => resolveAssetPath(modelPath), [modelPath])
   const { scene, animations } = useGLTF(resolvedModelPath)
 
@@ -24,7 +24,7 @@ export default function GLTFActor({ modelPath, clips = [], config, playbackContr
   }, [animations, clipAsset?.animations])
 
   const { actions, mixer } = useAnimations(mergedAnimations, scene)
-  useClipPlayback({ actions, clips, config, controls: playbackControls })
+  useClipPlayback({ actions, config, controls: playbackControls })
 
   useEffect(() => {
     if (!mixer) return undefined

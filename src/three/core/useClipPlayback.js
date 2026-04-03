@@ -5,26 +5,17 @@ function toLoopMode(loop) {
   return loop === 'once' ? LoopOnce : LoopRepeat
 }
 
-export default function useClipPlayback({ actions, clips = [], config, controls }) {
-  const clipName = controls?.clipName || config?.clip || 'Idle'
+export default function useClipPlayback({ actions, config, controls }) {
+  const clipName = controls?.clipName || config?.clip || ''
   const playbackRate = config?.playbackRate ?? 1
   const loop = config?.loop ?? 'repeat'
   const isPlaying = controls?.isPlaying ?? true
 
   const selectedClip = useMemo(() => {
     if (!actions) return null
-
-    const fromCfg = actions[clipName]
-    if (fromCfg) return fromCfg
-
-    for (const candidate of clips) {
-      if (actions[candidate]) return actions[candidate]
-    }
-
-    if (actions.Idle) return actions.Idle
-    const first = Object.keys(actions)[0]
-    return first ? actions[first] : null
-  }, [actions, clipName, clips])
+    if (!clipName) return null
+    return actions[clipName] || null
+  }, [actions, clipName])
 
   useEffect(() => {
     if (!selectedClip) return undefined

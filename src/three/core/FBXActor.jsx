@@ -78,7 +78,7 @@ function summarizeFbx(model, animations, info) {
   }
 }
 
-export default function FBXActor({ modelPath, clips = [], config, onModelDebug, playbackControls }) {
+export default function FBXActor({ modelPath, config, onModelDebug, playbackControls }) {
   const resolvedModelPath = useMemo(() => resolveAssetPath(modelPath), [modelPath])
   const model = useFBX(resolvedModelPath)
 
@@ -135,7 +135,7 @@ export default function FBXActor({ modelPath, clips = [], config, onModelDebug, 
   }, [model, model.animations, clipAsset?.animations])
 
   const { actions, mixer } = useAnimations(mergedAnimations, model)
-  useClipPlayback({ actions, clips, config, controls: playbackControls })
+  useClipPlayback({ actions, config, controls: playbackControls })
 
   useEffect(() => {
     normalizeModelPose(model)

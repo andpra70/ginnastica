@@ -929,7 +929,16 @@ input[type='range'] {
 }
 
 .program-card .detail-head {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(300px, 420px);
   align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.card-meta-col {
+  display: grid;
+  gap: 0.16rem;
+  align-content: start;
 }
 
 .program-card .detail-head > div > .hint:first-child {
@@ -985,6 +994,7 @@ input[type='range'] {
 .vertical-sections {
   display: grid;
   gap: 0.22rem;
+  align-content: start;
 }
 
 .vertical-sections article {
@@ -1220,8 +1230,10 @@ input[type='range'] {
   }
 
   .figure-card {
-    width: 100%;
-    max-width: 360px;
+    width: calc(100vw - 8px);
+    max-width: none;
+    margin-left: calc(50% - 50vw + 4px);
+    margin-right: calc(50% - 50vw + 4px);
   }
 
   .video-save-row {
@@ -1287,6 +1299,11 @@ input[type='range'] {
 
   .card-nav {
     grid-template-columns: auto 1fr auto auto;
+  }
+
+  .program-card .detail-head {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
   }
 
   .vertical-sections {

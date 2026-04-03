@@ -1,30 +1,29 @@
-import PushUpView from './exercises/PushUpView'
-import SquatView from './exercises/SquatView'
-import PlankView from './exercises/PlankView'
-import LungeView from './exercises/LungeView'
-import PikeView from './exercises/PikeView'
-import HollowView from './exercises/HollowView'
-import RowView from './exercises/RowView'
-import JumpSquatView from './exercises/JumpSquatView'
-import GluteBridgeView from './exercises/GluteBridgeView'
-import MountainClimberView from './exercises/MountainClimberView'
-import DeadBugView from './exercises/DeadBugView'
+import ExerciseStage from './core/ExerciseStage'
 
-export default function ExerciseRenderer({ type }) {
-  const map = {
-    pushup: PushUpView,
-    squat: SquatView,
-    plank: PlankView,
-    lunge: LungeView,
-    pike: PikeView,
-    hollow: HollowView,
-    row: RowView,
-    jumpSquat: JumpSquatView,
-    gluteBridge: GluteBridgeView,
-    mountainClimber: MountainClimberView,
-    deadBug: DeadBugView
-  }
+const EXERCISE_MAP = {
+  pushup: { stageType: 'pushup' },
+  squat: { stageType: 'squat' },
+  plank: { stageType: 'plank' },
+  lunge: { stageType: 'lunge' },
+  pike: { stageType: 'pike' },
+  hollow: { stageType: 'hollow' },
+  row: { stageType: 'row' },
+  jumpSquat: { stageType: 'jumpSquat' },
+  gluteBridge: { stageType: 'gluteBridge' },
+  mountainClimber: { stageType: 'mountainClimber' },
+  deadBug: { stageType: 'deadBug' }
+}
 
-  const Comp = map[type] ?? PlankView
-  return <Comp />
+export default function ExerciseRenderer({ cardId, type, cameraView, onCameraSaved, clipName, onClipSelected }) {
+  const cfg = EXERCISE_MAP[type] ?? EXERCISE_MAP.plank
+  return (
+    <ExerciseStage
+      cardId={cardId}
+      type={cfg.stageType}
+      cameraView={cameraView}
+      onCameraSaved={onCameraSaved}
+      clipName={clipName}
+      onClipSelected={onClipSelected}
+    />
+  )
 }
