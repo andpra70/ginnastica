@@ -1,4 +1,4 @@
-import { Suspense, useRef } from 'react'
+import { Suspense, useCallback, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Bounds, OrbitControls } from '@react-three/drei'
 import ModelActor from './ModelActor'
@@ -14,6 +14,40 @@ function getCfg(type) {
 export default function ExerciseStage({ type, clips }) {
   const cfg = getCfg(type)
   const controlsRef = useRef(null)
+  const storageKey = `ginnastica.camera.${type}`
+
+  const persistCameraView = useCallback((event) => {
+    const camera = event?.target?.object
+    const target = event?.target?.target
+    if (!camera || !target) return
+
+    const position = [
+      Number(camera.position.x.toFixed(3)),
+      Number(camera.position.y.toFixed(3)),
+      Number(camera.position.z.toFixed(3))
+    ]
+    const lookAt = [
+      Number(target.x.toFixed(3)),
+      Number(target.y.toFixed(3)),
+      Number(target.z.toFixed(3))
+    ]
+
+    const payload = {
+      type,
+      savedAt: new Date().toISOString(),
+      camera: position,
+      target: lookAt,
+      cameraLiteral: `[${position.join(', ')}]`,
+      targetLiteral: `[${lookAt.join(', ')}]`
+    }
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(payload))
+      localStorage.setItem('ginnastica.camera.last', JSON.stringify(payload))
+    } catch {
+      // Ignore storage errors (e.g. privacy mode)
+    }
+  }, [storageKey, type])
 
   return (
     <div className="figure-card figure-card-3d">
@@ -47,6 +81,7 @@ export default function ExerciseStage({ type, clips }) {
           zoomSpeed={-1}
           minDistance={2}
           maxDistance={50}
+          onEnd={persistCameraView}
         />
       </Canvas>
     </div>

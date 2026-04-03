@@ -2,7 +2,7 @@
 
 The app currently loads the FBX model and textures from:
 
-- `/assets3d/Man.fbx`
+- `/assets3d/Man2.fbx`
 - `/assets3d/textures/man_basecolor.jpg`
 - `/assets3d/textures/man_normal.png`
 - `/assets3d/textures/man_roughness.png`

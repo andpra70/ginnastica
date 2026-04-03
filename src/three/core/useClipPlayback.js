@@ -20,8 +20,7 @@ export default function useClipPlayback({ actions, clips = [], config }) {
       if (actions[candidate]) return actions[candidate]
     }
 
-    const first = Object.keys(actions)[0]
-    return first ? actions[first] : null
+    return actions.Idle || null
   }, [actions, clipName, clips])
 
   useEffect(() => {

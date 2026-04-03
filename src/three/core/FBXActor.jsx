@@ -3,6 +3,7 @@ import { Box3, Color, RepeatWrapping, SRGBColorSpace, TextureLoader, Vector3 } f
 import { useAnimations, useFBX } from '@react-three/drei'
 import useClipPlayback from './useClipPlayback'
 import resolveAssetPath from './resolveAssetPath'
+import createProceduralExerciseClip from './createProceduralExerciseClip'
 
 function applyPbrTextures(model, maps) {
   model.traverse((node) => {
@@ -98,11 +99,24 @@ export default function FBXActor({ modelPath, clips = [], config }) {
   const mergedAnimations = useMemo(() => {
     const local = model.animations || []
     const external = clipAsset?.animations || []
-    if (!external.length) return local
-
+    const merged = [...local]
     const localByName = new Set(local.map((a) => a.name))
-    return [...local, ...external.filter((a) => !localByName.has(a.name))]
-  }, [model.animations, clipAsset?.animations])
+    if (external.length) {
+      for (const clip of external) {
+        if (localByName.has(clip.name)) continue
+        merged.push(clip)
+        localByName.add(clip.name)
+      }
+    }
+
+    const wanted = config?.clip
+    if (wanted && !localByName.has(wanted)) {
+      const procedural = createProceduralExerciseClip(model, wanted)
+      if (procedural) merged.push(procedural)
+    }
+
+    return merged
+  }, [model, model.animations, clipAsset?.animations, config?.clip])
 
   const { actions, mixer } = useAnimations(mergedAnimations, model)
   useClipPlayback({ actions, clips, config })
