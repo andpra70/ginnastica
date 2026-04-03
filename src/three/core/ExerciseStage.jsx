@@ -1,6 +1,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Bounds, OrbitControls } from '@react-three/drei'
+import { Bounds, OrbitControls, useBounds } from '@react-three/drei'
 import ModelActor from './ModelActor'
 import animationCfg from '../../config/exerciseAnimations.json'
 
@@ -16,13 +16,33 @@ function normalizeView(raw) {
   }
 }
 
+function BoundsAutoFit({ signal }) {
+  const bounds = useBounds()
+
+  useEffect(() => {
+    if (!signal) return
+    bounds.refresh().clip().fit()
+  }, [signal, bounds])
+
+  return null
+}
+
+function debugCameraLog(step, payload) {
+  // Keep logs concise and searchable in devtools
+  console.debug(`[Trainer3D][Camera] ${step}`, payload)
+}
+
 export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipName, onClipSelected, onClipOptions }) {
   const cfg = animationCfg.default || {}
   const controlsRef = useRef(null)
+  const onCameraSavedRef = useRef(onCameraSaved)
+  const onClipSelectedRef = useRef(onClipSelected)
+  const onClipOptionsRef = useRef(onClipOptions)
   const scopedStorageKey = `ginnastica.camera.card.${cardId || 'default'}`
   const [showFbxJson, setShowFbxJson] = useState(false)
   const [fbxDebug, setFbxDebug] = useState(null)
   const [selectedClipName, setSelectedClipName] = useState(clipName || cfg.clip || '')
+  const [autoFitSignal, setAutoFitSignal] = useState(0)
 
   const fbxJson = useMemo(() => {
     if (!fbxDebug) return ''
@@ -39,8 +59,20 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
   )
 
   useEffect(() => {
-    onClipOptions?.(clipNames)
-  }, [clipNames, onClipOptions])
+    onCameraSavedRef.current = onCameraSaved
+  }, [onCameraSaved])
+
+  useEffect(() => {
+    onClipSelectedRef.current = onClipSelected
+  }, [onClipSelected])
+
+  useEffect(() => {
+    onClipOptionsRef.current = onClipOptions
+  }, [onClipOptions])
+
+  useEffect(() => {
+    onClipOptionsRef.current?.(clipNames)
+  }, [clipNames])
 
   useEffect(() => {
     setSelectedClipName(clipName || cfg.clip || '')
@@ -51,6 +83,7 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
     if (clipNames.includes(selectedClipName)) return
     const preferred = clipNames.includes(clipName) ? clipName : (clipNames.includes(cfg.clip) ? cfg.clip : clipNames[0])
     setSelectedClipName(preferred)
+    onClipSelectedRef.current?.(preferred)
   }, [clipNames, selectedClipName, cfg.clip, clipName])
 
   const resolvedView = useMemo(() => {
@@ -72,15 +105,19 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
 
   useEffect(() => {
     const controls = controlsRef.current
-    if (!controls || !resolvedView) return
-    controls.object.position.set(...resolvedView.camera)
-    controls.target.set(...resolvedView.target)
+    if (!controls) return
+    const nextCamera = resolvedView?.camera || cfg.camera
+    const nextTarget = resolvedView?.target || cfg.target
+    controls.object.position.set(...nextCamera)
+    controls.target.set(...nextTarget)
     controls.update()
-  }, [resolvedView, cardId])
+    debugCameraLog('apply-view', { cardId, source: resolvedView ? 'resolvedView' : 'default', camera: nextCamera, target: nextTarget })
+  }, [resolvedView, cardId, cfg.camera, cfg.target])
 
-  const persistCameraView = useCallback((event) => {
-    const camera = event?.target?.object
-    const target = event?.target?.target
+  const persistCameraView = useCallback((event, options = {}) => {
+    const { notifyParent = true, reason = 'unknown' } = options
+    const camera = event?.target?.object || controlsRef.current?.object
+    const target = event?.target?.target || controlsRef.current?.target
     if (!camera || !target) return
 
     const position = [
@@ -109,8 +146,9 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
     } catch {
       // Ignore storage errors (e.g. privacy mode)
     }
-    onCameraSaved?.(payload)
-  }, [scopedStorageKey, cardId, onCameraSaved])
+    debugCameraLog('save-view', { cardId, reason, camera: payload.camera, target: payload.target, notifyParent })
+    if (notifyParent) onCameraSavedRef.current?.(payload)
+  }, [scopedStorageKey, cardId])
 
   return (
     <div className="figure-panel">
@@ -121,7 +159,8 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
           <directionalLight position={[3, 4, 3]} intensity={1.2} castShadow />
 
           <Suspense fallback={null}>
-            <Bounds fit clip observe margin={3.2}>
+            <Bounds clip margin={3.2}>
+              <BoundsAutoFit signal={autoFitSignal} />
               <group key={cardId || 'viewer'}>
                 <ModelActor
                   modelPath={animationCfg.modelAsset}
@@ -133,20 +172,15 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
             </Bounds>
           </Suspense>
 
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.2, 0]} receiveShadow>
-            <circleGeometry args={[2.6, 64]} />
-            <meshStandardMaterial color="#dcebf2" />
-          </mesh>
-
           <OrbitControls
             ref={controlsRef}
             makeDefault
             target={resolvedView?.target || cfg.target}
-            enablePan={false}
+            enablePan
+            screenSpacePanning
             zoomSpeed={-1}
             minDistance={2}
             maxDistance={50}
-            onEnd={persistCameraView}
           />
         </Canvas>
       </div>
@@ -175,6 +209,24 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
                   )}
                 </select>
               </label>
+              <button
+                type="button"
+                className="fbx-autofit-btn"
+                title="AutoFit camera"
+                aria-label="AutoFit camera"
+                onClick={() => setAutoFitSignal((v) => v + 1)}
+              >
+                ⤢
+              </button>
+              <button
+                type="button"
+                className="fbx-saveview-btn"
+                title="Salva view scheda"
+                aria-label="Salva view scheda"
+                onClick={() => persistCameraView(undefined, { notifyParent: true, reason: 'manual-save-view' })}
+              >
+                ⌖
+              </button>
             </div>
 
             <button type="button" onClick={() => setShowFbxJson((v) => !v)}>

@@ -167,7 +167,7 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
       safeDestroyPlayer(playerRef.current)
       playerRef.current = null
     }
-  }, [videoId, startSec, autoRangeFromDuration])
+  }, [videoId, autoRangeFromDuration])
 
   useEffect(() => {
     if (!isReadyPlayer(playerRef.current)) return undefined

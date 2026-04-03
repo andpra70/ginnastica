@@ -664,6 +664,24 @@ input[type='range'] {
   width: 100%;
 }
 
+.fbx-play-controls .fbx-autofit-btn {
+  width: auto;
+  justify-self: start;
+  min-width: 40px;
+  padding: 0.25rem 0.45rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.fbx-play-controls .fbx-saveview-btn {
+  width: auto;
+  justify-self: start;
+  min-width: 40px;
+  padding: 0.25rem 0.45rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .fbx-play-buttons {
   display: flex;
   gap: 0.45rem;

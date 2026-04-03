@@ -3,6 +3,10 @@
     "https://www.youtube.com/watch?v=xK5PMmRbs0k",
     "https://www.youtube.com/watch?v=uTYNPadVdic"
   ],
+  "ui": {
+    "splashEnabled": false,
+    "splashDurationMs": 2000
+  },
   "allenamento": {
     "livelli": {
       "base": {
@@ -41,24 +45,12 @@
         ],
         "breathing": "Respirazione ritmica continua, senza apnea.",
         "viewerType": "video",
-        "classKey": "warmup",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
-          "start": 308.5,
-          "end": 317.8
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            -194.579,
-            55.173,
-            180.77
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "warmup"
       },
       {
         "id": "warmup-cardio",
@@ -79,25 +71,12 @@
         ],
         "breathing": "Inspiro dal naso, espiro dalla bocca in modo regolare.",
         "viewerType": "3d",
-        "classKey": "warmup",
-        "clipName": "mixamo.com",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": {
-          "camera": [
-            597.008,
-            20.799,
-            507.436
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "warmup"
       },
       {
         "id": "warmup-core",
@@ -118,25 +97,12 @@
         ],
         "breathing": "Espirazione lunga per stabilizzare il core.",
         "viewerType": "3d",
-        "classKey": "warmup",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": {
-          "camera": [
-            -762.35,
-            -65.829,
-            -114.966
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        },
-        "clipName": "mixamo.com"
+        "classKey": "warmup"
       },
       {
         "id": "push-up-base",
@@ -157,24 +123,12 @@
         ],
         "breathing": "Inspira in discesa, espira in spinta.",
         "viewerType": "video",
-        "classKey": "esercizio",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
-          "start": 164,
-          "end": 226.4
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            163.248,
-            104.914,
-            224.036
-          ],
-          "target": [
-            0.252,
-            81.171,
-            0.292
-          ]
-        }
+        "classKey": "esercizio"
       },
       {
         "id": "bodyweight-squat",
@@ -195,25 +149,12 @@
         ],
         "breathing": "Inspira in discesa, espira salendo.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
-          "start": 26,
-          "end": 46
+        "video": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            -226.946,
-            49.358,
-            210.841
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        },
-        "clipName": "mixamo.com"
+        "classKey": "esercizio"
       },
       {
         "id": "reverse-lunge",
@@ -234,24 +175,12 @@
         ],
         "breathing": "Inspira in discesa, espira in risalita.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
-          "start": 46,
-          "end": 64
+        "video": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            254.797,
-            65.187,
-            206.455
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "esercizio"
       },
       {
         "id": "mountain-climber",
@@ -272,24 +201,12 @@
         ],
         "breathing": "Espira ogni due appoggi, ritmo regolare.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": {
-          "camera": [
-            -198.012,
-            38.581,
-            172.903
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "esercizio"
       },
       {
         "id": "jump-squat-controlled",
@@ -310,13 +227,12 @@
         ],
         "breathing": "Inspira prima del salto, espira nello stacco.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "classKey": "esercizio"
       },
       {
         "id": "dead-bug",
@@ -337,24 +253,12 @@
         ],
         "breathing": "Espira in estensione, inspira nel rientro.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
-          "start": 202,
-          "end": 222
+        "video": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            19.1,
-            -619.09,
-            24.67
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "esercizio"
       },
       {
         "id": "stretch-hip-flexor",
@@ -375,24 +279,12 @@
         ],
         "breathing": "Respiri lenti e profondi.",
         "viewerType": "3d",
-        "classKey": "stretching",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": {
-          "camera": [
-            254.797,
-            65.19,
-            206.455
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "stretching"
       },
       {
         "id": "stretch-hamstring",
@@ -413,13 +305,12 @@
         ],
         "breathing": "Espirazione lunga in allungamento.",
         "viewerType": "3d",
-        "classKey": "stretching",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "classKey": "stretching"
       },
       {
         "id": "stretch-chest",
@@ -440,13 +331,12 @@
         ],
         "breathing": "Inspiro lento, espiro completo.",
         "viewerType": "3d",
-        "classKey": "stretching",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "classKey": "stretching"
       }
     ],
     "warmup": [
@@ -469,24 +359,12 @@
         ],
         "breathing": "Respirazione ritmica continua, senza apnea.",
         "viewerType": "video",
-        "classKey": "warmup",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
-          "start": 308.5,
-          "end": 317.8
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            -194.579,
-            55.173,
-            180.77
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "warmup"
       },
       {
         "id": "warmup-cardio",
@@ -507,25 +385,12 @@
         ],
         "breathing": "Inspiro dal naso, espiro dalla bocca in modo regolare.",
         "viewerType": "3d",
-        "classKey": "warmup",
-        "clipName": "mixamo.com",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": {
-          "camera": [
-            597.008,
-            20.799,
-            507.436
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "warmup"
       },
       {
         "id": "warmup-core",
@@ -546,25 +411,12 @@
         ],
         "breathing": "Espirazione lunga per stabilizzare il core.",
         "viewerType": "3d",
-        "classKey": "warmup",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": {
-          "camera": [
-            -762.35,
-            -65.829,
-            -114.966
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        },
-        "clipName": "mixamo.com"
+        "classKey": "warmup"
       }
     ],
     "esercizi": [
@@ -587,24 +439,12 @@
         ],
         "breathing": "Inspira in discesa, espira in spinta.",
         "viewerType": "video",
-        "classKey": "esercizio",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
-          "start": 164,
-          "end": 226.4
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            163.248,
-            104.914,
-            224.036
-          ],
-          "target": [
-            0.252,
-            81.171,
-            0.292
-          ]
-        }
+        "classKey": "esercizio"
       },
       {
         "id": "bodyweight-squat",
@@ -625,25 +465,12 @@
         ],
         "breathing": "Inspira in discesa, espira salendo.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
-          "start": 26,
-          "end": 46
+        "video": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            -226.946,
-            49.358,
-            210.841
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        },
-        "clipName": "mixamo.com"
+        "classKey": "esercizio"
       },
       {
         "id": "reverse-lunge",
@@ -664,24 +491,12 @@
         ],
         "breathing": "Inspira in discesa, espira in risalita.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
-          "start": 46,
-          "end": 64
+        "video": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            254.797,
-            65.187,
-            206.455
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "esercizio"
       },
       {
         "id": "mountain-climber",
@@ -702,24 +517,12 @@
         ],
         "breathing": "Espira ogni due appoggi, ritmo regolare.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": {
-          "camera": [
-            -198.012,
-            38.581,
-            172.903
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "esercizio"
       },
       {
         "id": "jump-squat-controlled",
@@ -740,13 +543,12 @@
         ],
         "breathing": "Inspira prima del salto, espira nello stacco.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "classKey": "esercizio"
       },
       {
         "id": "dead-bug",
@@ -767,24 +569,12 @@
         ],
         "breathing": "Espira in estensione, inspira nel rientro.",
         "viewerType": "3d",
-        "classKey": "esercizio",
-        "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
-          "start": 202,
-          "end": 222
+        "video": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 0,
+          "end": 20
         },
-        "cameraView": {
-          "camera": [
-            19.1,
-            -619.09,
-            24.67
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "esercizio"
       }
     ],
     "stretching": [
@@ -807,24 +597,12 @@
         ],
         "breathing": "Respiri lenti e profondi.",
         "viewerType": "3d",
-        "classKey": "stretching",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": {
-          "camera": [
-            254.797,
-            65.19,
-            206.455
-          ],
-          "target": [
-            0,
-            90.116,
-            0
-          ]
-        }
+        "classKey": "stretching"
       },
       {
         "id": "stretch-hamstring",
@@ -845,13 +623,12 @@
         ],
         "breathing": "Espirazione lunga in allungamento.",
         "viewerType": "3d",
-        "classKey": "stretching",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "classKey": "stretching"
       },
       {
         "id": "stretch-chest",
@@ -872,13 +649,12 @@
         ],
         "breathing": "Inspiro lento, espiro completo.",
         "viewerType": "3d",
-        "classKey": "stretching",
-        "videoSegment": {
+        "video": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "classKey": "stretching"
       }
     ]
   }

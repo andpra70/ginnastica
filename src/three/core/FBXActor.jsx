@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Box3, Color, RepeatWrapping, SRGBColorSpace, TextureLoader, Vector3 } from 'three'
 import { useAnimations, useFBX } from '@react-three/drei'
+import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import useClipPlayback from './useClipPlayback'
 import resolveAssetPath from './resolveAssetPath'
 
@@ -36,15 +37,26 @@ function configureMap(texture, isColor = false) {
 
 function normalizeModelPose(model) {
   model.rotation.set(0, 0, 0)
-  const box = new Box3().setFromObject(model)
-  if (box.isEmpty()) return
+  model.position.set(0, 0, 0)
+  model.scale.set(1, 1, 1)
+  model.updateMatrixWorld(true)
 
+  const initialBox = new Box3().setFromObject(model)
+  if (initialBox.isEmpty()) return
+
+  const size = new Vector3()
+  initialBox.getSize(size)
+  const maxAxis = Math.max(size.x, size.y, size.z, 1e-6)
+  const targetBoxSize = 10
+  const uniformScale = targetBoxSize / maxAxis
+  model.scale.setScalar(uniformScale)
+  model.updateMatrixWorld(true)
+
+  const centeredBox = new Box3().setFromObject(model)
   const center = new Vector3()
-
-  box.getCenter(center)
-  model.position.x -= center.x
-  model.position.z -= center.z
-  model.position.y -= box.min.y
+  centeredBox.getCenter(center)
+  model.position.sub(center)
+  model.updateMatrixWorld(true)
 }
 
 function buildNodeTree(node) {
@@ -80,7 +92,8 @@ function summarizeFbx(model, animations, info) {
 
 export default function FBXActor({ modelPath, config, onModelDebug, playbackControls }) {
   const resolvedModelPath = useMemo(() => resolveAssetPath(modelPath), [modelPath])
-  const model = useFBX(resolvedModelPath)
+  const sourceModel = useFBX(resolvedModelPath)
+  const model = useMemo(() => cloneSkeleton(sourceModel), [sourceModel])
 
   const clipAssetPath = config?.asset
   const resolvedClipAssetPath = useMemo(
@@ -102,13 +115,13 @@ export default function FBXActor({ modelPath, config, onModelDebug, playbackCont
     [texturePaths.baseColor, texturePaths.normal, texturePaths.roughness, texturePaths.height]
   )
 
-  const textures = new TextureLoader().load.bind(new TextureLoader())
+  const textureLoader = useMemo(() => new TextureLoader(), [])
 
   const maps = useMemo(() => {
-    const base = baseColor ? textures(baseColor) : null
-    const norm = normal ? textures(normal) : null
-    const rough = roughness ? textures(roughness) : null
-    const h = height ? textures(height) : null
+    const base = baseColor ? textureLoader.load(baseColor) : null
+    const norm = normal ? textureLoader.load(normal) : null
+    const rough = roughness ? textureLoader.load(roughness) : null
+    const h = height ? textureLoader.load(height) : null
 
     configureMap(base, true)
     configureMap(norm)
@@ -116,7 +129,7 @@ export default function FBXActor({ modelPath, config, onModelDebug, playbackCont
     configureMap(h)
 
     return { baseColor: base, normal: norm, roughness: rough, height: h }
-  }, [textures, baseColor, normal, roughness, height])
+  }, [textureLoader, baseColor, normal, roughness, height])
 
   const mergedAnimations = useMemo(() => {
     const local = model.animations || []

@@ -202,6 +202,23 @@ function getSavedCameraView(cardId, storedCameraViews = {}) {
 }
 
 function CardViewer({ card }) {
+  const handleVideoSegmentChange = useCallback(
+    (segment) => card.onVideoSegmentChange?.(card.id, segment),
+    [card.id, card.onVideoSegmentChange]
+  )
+  const handleCameraSaved = useCallback(
+    (payload) => card.onCameraSaved?.(card.id, payload),
+    [card.id, card.onCameraSaved]
+  )
+  const handleClipSelected = useCallback(
+    (value) => card.onClipSelected?.(card.id, value),
+    [card.id, card.onClipSelected]
+  )
+  const handleClipOptions = useCallback(
+    (clips) => card.onClipOptions?.(card.id, clips),
+    [card.id, card.onClipOptions]
+  )
+
   if (card.viewerType === 'video') {
     const exerciseVideo = {
       ...card,
@@ -214,7 +231,7 @@ function CardViewer({ card }) {
             key={`video-${card.id}`}
             exercise={exerciseVideo}
             videoSources={card.videoSources || []}
-            onSegmentChange={(segment) => card.onVideoSegmentChange?.(card.id, segment)}
+            onSegmentChange={handleVideoSegmentChange}
             editable
           />
         </div>
@@ -234,13 +251,12 @@ function CardViewer({ card }) {
   }
   return (
     <ExerciseRenderer
-      key={`viewer3d-${card.id}`}
       cardId={card.id}
       cameraView={card.cameraView}
-      onCameraSaved={(payload) => card.onCameraSaved?.(card.id, payload)}
+      onCameraSaved={handleCameraSaved}
       clipName={card.clipName}
-      onClipSelected={(value) => card.onClipSelected?.(card.id, value)}
-      onClipOptions={(clips) => card.onClipOptions?.(card.id, clips)}
+      onClipSelected={handleClipSelected}
+      onClipOptions={handleClipOptions}
     />
   )
 }
@@ -309,6 +325,7 @@ export default function App() {
   const [newVideoSource, setNewVideoSource] = useState('')
   const defaultVideoUrl = videoSources?.[0] || ''
   const [clipOptionsByCard, setClipOptionsByCard] = useState({})
+  const lastCameraSignatureByCardRef = useRef({})
   const levels = allCfg.livelli || {}
   const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
   const splashUrlMode = getSplashModeFromUrl()
@@ -405,6 +422,7 @@ export default function App() {
   const switchSelectedCard = useCallback((nextCardId) => {
     const targetId = String(nextCardId || '')
     if (!targetId || targetId === selectedCardId) return
+    console.debug('[Trainer3D][Nav] switch-card', { from: selectedCardId, to: targetId })
     commitCardDraft(selectedCardId)
     setSelectedCardId(targetId)
   }, [selectedCardId, commitCardDraft])
@@ -473,7 +491,19 @@ export default function App() {
   const handleCameraSaved = useCallback((cardId, viewPayload) => {
     const normalized = normalizeCameraView(viewPayload)
     if (!normalized) return
-    setProgramCardsBase((cards) => cards.map((c) => (c.id === cardId ? { ...c, cameraView: normalized } : c)))
+    const signature = `${normalized.camera.join(',')}|${normalized.target.join(',')}`
+    if (lastCameraSignatureByCardRef.current[cardId] === signature) return
+    lastCameraSignatureByCardRef.current[cardId] = signature
+    console.debug('[Trainer3D][App] camera-saved', { cardId, camera: normalized.camera, target: normalized.target })
+    setProgramCardsBase((cards) => cards.map((c) => {
+      if (c.id !== cardId) return c
+      const current = normalizeCameraView(c.cameraView)
+      const same = !!current
+        && current.camera.every((v, i) => v === normalized.camera[i])
+        && current.target.every((v, i) => v === normalized.target[i])
+      if (same) return c
+      return { ...c, cameraView: normalized }
+    }))
   }, [])
 
   const handleClipSelected = useCallback((cardId, clipName) => {
@@ -514,10 +544,34 @@ export default function App() {
     }))
   }, [defaultVideoUrl])
 
+  const getExportCards = useCallback(() => {
+    return orderByClass(
+      programCards.map((card) => {
+        const pendingVideo = latestVideoByCardRef.current[card.id]
+        const pendingClip = latestClipByCardRef.current[card.id]
+        const storedCamera = normalizeCameraView(card.cameraView) || getSavedCameraView(card.id)
+        const clipOptions = clipOptionsByCard[card.id] || []
+        const next = { ...card }
+
+        if (pendingVideo) next.videoSegment = pendingVideo
+        if (next.viewerType === '3d') {
+          const resolvedClip = pendingClip || next.clipName || (clipOptions.length ? clipOptions[0] : '')
+          if (resolvedClip) next.clipName = resolvedClip
+          if (storedCamera) next.cameraView = storedCamera
+        }
+
+        return next
+      })
+    )
+  }, [programCards, clipOptionsByCard])
+
   const saveProgramJson = () => {
+    commitCardDraft(selectedCardId)
+    const exportCards = getExportCards()
     const payload = {
-      ...toExportProgram(programCardsBase, levels, videoSources || [])
+      ...toExportProgram(exportCards, levels, videoSources || [])
     }
+    setProgramCardsBase(exportCards)
     localStorage.setItem(getProgramStorageKey(trainingKey), JSON.stringify(payload))
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
