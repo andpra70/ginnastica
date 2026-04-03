@@ -1,6 +1,17 @@
 import ExerciseStage from './core/ExerciseStage'
 
-export default function ExerciseRenderer({ cardId, cameraView, onCameraSaved, clipName, onClipSelected, onClipOptions, theme }) {
+export default function ExerciseRenderer({
+  cardId,
+  cameraView,
+  onCameraSaved,
+  clipName,
+  onClipSelected,
+  onClipOptions,
+  theme,
+  modelAsset,
+  modelOptions,
+  onModelAssetSelected
+}) {
   return (
     <ExerciseStage
       cardId={cardId}
@@ -10,6 +21,9 @@ export default function ExerciseRenderer({ cardId, cameraView, onCameraSaved, cl
       onClipSelected={onClipSelected}
       onClipOptions={onClipOptions}
       theme={theme}
+      modelAsset={modelAsset}
+      modelOptions={modelOptions}
+      onModelAssetSelected={onModelAssetSelected}
     />
   )
 }

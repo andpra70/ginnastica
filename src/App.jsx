@@ -3,6 +3,7 @@ import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
 import calistenichsConfig from './config/calistenichs.json'
 import pilatesConfig from './config/pilates.json'
+import claudiaModelsConfig from './config/claudiaModels.json'
 
 const TRAINING_CONFIGS = {
   calistenichs: {
@@ -218,6 +219,10 @@ function CardViewer({ card }) {
     (clips) => card.onClipOptions?.(card.id, clips),
     [card.id, card.onClipOptions]
   )
+  const handleModelAssetSelected = useCallback(
+    (assetPath) => card.onModelAssetSelected?.(card.id, assetPath),
+    [card.id, card.onModelAssetSelected]
+  )
 
   if (card.viewerType === 'video') {
     const exerciseVideo = {
@@ -258,6 +263,9 @@ function CardViewer({ card }) {
       onClipSelected={handleClipSelected}
       onClipOptions={handleClipOptions}
       theme={card.theme}
+      modelAsset={card.modelAsset}
+      modelOptions={card.modelOptions || []}
+      onModelAssetSelected={handleModelAssetSelected}
     />
   )
 }
@@ -328,6 +336,10 @@ export default function App() {
   const [clipOptionsByCard, setClipOptionsByCard] = useState({})
   const lastCameraSignatureByCardRef = useRef({})
   const levels = allCfg.livelli || {}
+  const claudiaModelOptions = useMemo(
+    () => [...new Set((claudiaModelsConfig?.models || []).filter((value) => typeof value === 'string' && value.endsWith('.fbx')))],
+    []
+  )
   const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
   const splashUrlMode = getSplashModeFromUrl()
   const splashEnabled = splashUrlMode ?? (appConfig?.ui?.splashEnabled !== false)
@@ -523,6 +535,11 @@ export default function App() {
     })
   }, [])
 
+  const handleModelAssetSelected = useCallback((cardId, modelAsset) => {
+    if (!cardId || !modelAsset) return
+    setProgramCardsBase((cards) => cards.map((c) => (c.id === cardId ? { ...c, modelAsset } : c)))
+  }, [])
+
   const handleVideoSegmentChange = useCallback((cardId, segment) => {
     if (!cardId || !segment) return
     const start = Number(segment.start ?? 0)
@@ -702,9 +719,9 @@ export default function App() {
           </section>
 
           {playMode ? (
-            currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, videoSources, isEditMode, theme }} /> : null
+            currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions: claudiaModelOptions }} /> : null
           ) : (
-            selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, videoSources, isEditMode, theme }} /> : null
+            selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions: claudiaModelOptions }} /> : null
           )}
 
           {isEditMode && selectedCard ? (

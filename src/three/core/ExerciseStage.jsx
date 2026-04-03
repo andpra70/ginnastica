@@ -32,10 +32,27 @@ function debugCameraLog(step, payload) {
   console.debug(`[Trainer3D][Camera] ${step}`, payload)
 }
 
-export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipName, onClipSelected, onClipOptions, theme }) {
+export default function ExerciseStage({
+  cardId,
+  cameraView,
+  onCameraSaved,
+  clipName,
+  onClipSelected,
+  onClipOptions,
+  theme,
+  modelAsset,
+  modelOptions,
+  onModelAssetSelected
+}) {
   const cfg = animationCfg.default || {}
   const isFemaleTheme = theme === 'femmina'
-  const modelAssetPath = isFemaleTheme ? '/assets3d/claudia/Woman.fbx' : animationCfg.modelAsset
+  const normalizedModelOptions = useMemo(
+    () => (Array.isArray(modelOptions) ? modelOptions.filter((value) => typeof value === 'string' && value.endsWith('.fbx')) : []),
+    [modelOptions]
+  )
+  const fallbackFemaleModel = normalizedModelOptions[0] || '/assets3d/claudia/Woman.fbx'
+  const selectedFemaleModel = modelAsset && modelAsset.endsWith('.fbx') ? modelAsset : fallbackFemaleModel
+  const modelAssetPath = isFemaleTheme ? selectedFemaleModel : animationCfg.modelAsset
   const renderCfg = useMemo(() => {
     if (!isFemaleTheme) return cfg
     return {
@@ -209,7 +226,7 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
                   onChange={(event) => {
                     const nextClip = event.target.value
                     setSelectedClipName(nextClip)
-                    onClipSelected?.(nextClip)
+                    onClipSelectedRef.current?.(nextClip)
                   }}
                   disabled={!clipNames.length}
                 >
@@ -222,6 +239,20 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
                   )}
                 </select>
               </label>
+              {isFemaleTheme ? (
+                <label>
+                  Modello FBX
+                  <select
+                    value={selectedFemaleModel}
+                    onChange={(event) => onModelAssetSelected?.(event.target.value)}
+                    disabled={!normalizedModelOptions.length}
+                  >
+                    {(normalizedModelOptions.length ? normalizedModelOptions : [fallbackFemaleModel]).map((path) => (
+                      <option key={path} value={path}>{path.split('/').pop()}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <button
                 type="button"
                 className="fbx-autofit-btn"
