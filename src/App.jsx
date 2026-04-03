@@ -68,7 +68,30 @@ function toExportProgram(cards, levels) {
   }
 }
 
-function getSavedVideoSegment(cardId, fallbackVideo) {
+function readStoredVideoSegments() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem('ginnastica.program.videoSegments')
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function getSavedVideoSegment(cardId, fallbackVideo, storedSegments = {}) {
+  const fromProgram = storedSegments?.[cardId]
+  if (fromProgram && typeof fromProgram === 'object') {
+    const start = Number.isFinite(Number(fromProgram.start)) ? Number(fromProgram.start) : fallbackVideo?.start
+    const end = Number.isFinite(Number(fromProgram.end)) ? Number(fromProgram.end) : fallbackVideo?.end
+    return {
+      url: typeof fromProgram.videoUrl === 'string' && fromProgram.videoUrl ? fromProgram.videoUrl : fallbackVideo?.url || '',
+      start: Number.isFinite(start) ? start : 0,
+      end: Number.isFinite(end) ? end : Math.max(1, (Number.isFinite(start) ? start : 0) + 20)
+    }
+  }
+
   if (typeof window === 'undefined') return fallbackVideo
   try {
     const raw = window.localStorage.getItem(`ginnastica.videoLoop.${cardId}`)
@@ -166,6 +189,22 @@ export default function App() {
 
   const allCfg = appConfig?.allenamento || {}
   const defaultVideoUrl = appConfig.videoSources?.[0] || ''
+  const [storedSegments, setStoredSegments] = useState(() => readStoredVideoSegments())
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = window.localStorage.getItem('ginnastica.program.json')
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      const segments = parsed?.videoSegments
+      if (!segments || typeof segments !== 'object') return
+      window.localStorage.setItem('ginnastica.program.videoSegments', JSON.stringify(segments))
+      setStoredSegments(segments)
+    } catch {
+      // Ignore malformed stored json
+    }
+  }, [])
   const levels = allCfg.livelli || {}
   const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
 
@@ -197,13 +236,13 @@ export default function App() {
           url: card.video?.url || defaultVideoUrl,
           start: Number(card.video?.start ?? 0),
           end: Number(card.video?.end ?? 20)
-        }),
+        }, storedSegments),
         setsScaled: Math.max(1, Math.round((card.sets || 1) * setMultiplier)),
         durationScaledSec: Math.max(20, Math.round((card.durationSec || 60) * durationMultiplier)),
         repsScaled: scaleReps(card.reps || '', durationMultiplier)
       }))
     )
-  }, [programCardsBase, levelCfg, defaultVideoUrl])
+  }, [programCardsBase, levelCfg, defaultVideoUrl, storedSegments])
 
   const [selectedCardId, setSelectedCardId] = useState(programCards[0]?.id || '')
 
@@ -272,7 +311,24 @@ export default function App() {
   }
 
   const saveProgramJson = () => {
-    const payload = toExportProgram(programCardsBase, levels)
+    const storageSegments = readStoredVideoSegments()
+    const computedSegments = {}
+    for (const card of programCards) {
+      const seg = card.video || {}
+      computedSegments[card.id] = {
+        videoUrl: seg.url || '',
+        start: Number(seg.start ?? 0),
+        end: Number(seg.end ?? 20)
+      }
+    }
+    const videoSegments = { ...computedSegments, ...storageSegments }
+    window.localStorage.setItem('ginnastica.program.videoSegments', JSON.stringify(videoSegments))
+    setStoredSegments(videoSegments)
+
+    const payload = {
+      ...toExportProgram(programCardsBase, levels),
+      videoSegments
+    }
     localStorage.setItem('ginnastica.program.json', JSON.stringify(payload))
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
