@@ -86,40 +86,27 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
   const defaults = exercise?.video || { start: 0, end: 20, url: '' }
   const [selectedVideoUrl, setSelectedVideoUrl] = useState(defaults.url || videoSources[0] || '')
   const videoId = useMemo(() => parseYouTubeVideoId(selectedVideoUrl), [selectedVideoUrl])
-  const storageKey = `ginnastica.videoLoop.${exercise?.id || 'none'}`
-
   const [startSec, setStartSec] = useState(defaults.start)
   const [endSec, setEndSec] = useState(defaults.end)
   const [currentSec, setCurrentSec] = useState(0)
   const [durationSec, setDurationSec] = useState(Math.max(defaults.end + 10, 60))
   const [draggingHandle, setDraggingHandle] = useState(null)
+  const [autoRangeFromDuration, setAutoRangeFromDuration] = useState(false)
 
   useEffect(() => {
-    const savedRaw = localStorage.getItem(storageKey)
-    if (!savedRaw) {
-      setStartSec(defaults.start)
-      setEndSec(defaults.end)
-      const fallbackUrl = defaults.url || videoSources[0] || ''
-      setSelectedVideoUrl(fallbackUrl)
-      return
-    }
-
-    try {
-      const saved = JSON.parse(savedRaw)
-      const start = toNumber(saved.start, defaults.start)
-      const end = toNumber(saved.end, defaults.end)
-      const savedUrl = typeof saved.videoUrl === 'string' ? saved.videoUrl : ''
-      const fallbackUrl = defaults.url || videoSources[0] || ''
-      setStartSec(Math.max(0, start))
-      setEndSec(Math.max(start + 1, end))
-      setDurationSec((prev) => Math.max(prev, end + 10))
-      setSelectedVideoUrl(savedUrl || fallbackUrl)
-    } catch {
-      setStartSec(defaults.start)
-      setEndSec(defaults.end)
-      setSelectedVideoUrl(defaults.url || videoSources[0] || '')
-    }
-  }, [storageKey, defaults.start, defaults.end, defaults.url, videoSources])
+    const fallbackUrl = defaults.url || videoSources[0] || ''
+    const hasValidStart = Number.isFinite(Number(defaults.start))
+    const hasValidEnd = Number.isFinite(Number(defaults.end))
+    const hasExplicitSegment = hasValidStart && hasValidEnd && Number(defaults.end) > Number(defaults.start)
+    const nextStart = hasExplicitSegment ? Math.max(0, toNumber(defaults.start, 0)) : 0
+    const nextEnd = hasExplicitSegment ? Math.max(nextStart + 1, toNumber(defaults.end, nextStart + 20)) : 20
+    setStartSec(nextStart)
+    setEndSec(nextEnd)
+    setCurrentSec(nextStart)
+    setDurationSec(Math.max(nextEnd + 10, 60))
+    setSelectedVideoUrl(fallbackUrl)
+    setAutoRangeFromDuration(!hasExplicitSegment)
+  }, [exercise?.id, defaults.start, defaults.end, defaults.url, videoSources])
 
   useEffect(() => {
     if (!videoId || !playerHostRef.current) return undefined
@@ -161,7 +148,14 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
             if (!isReadyPlayer(player)) return
             const duration = Number(player.getDuration?.() || 0)
             if (duration > 1) setDurationSec(duration)
-            player.seekTo(startSec, true)
+            if (autoRangeFromDuration && duration > 1) {
+              setStartSec(0)
+              setEndSec(duration)
+              setAutoRangeFromDuration(false)
+              player.seekTo(0, true)
+            } else {
+              player.seekTo(startSec, true)
+            }
             player.playVideo()
           }
         }
@@ -173,7 +167,7 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
       safeDestroyPlayer(playerRef.current)
       playerRef.current = null
     }
-  }, [videoId, startSec])
+  }, [videoId, startSec, autoRangeFromDuration])
 
   useEffect(() => {
     if (!isReadyPlayer(playerRef.current)) return undefined
@@ -202,16 +196,6 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
       }
     }, 200)
 
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        exerciseId: exercise.id,
-        videoUrl: selectedVideoUrl,
-        start: Number(startSec.toFixed(1)),
-        end: Number(endSec.toFixed(1)),
-        snippet: `{"start":${Number(startSec.toFixed(1))},"stop":${Number(endSec.toFixed(1))}}`
-      })
-    )
     onSegmentChangeRef.current?.({
       url: selectedVideoUrl,
       start: Number(startSec.toFixed(1)),
@@ -224,7 +208,7 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
         pollerRef.current = null
       }
     }
-  }, [startSec, endSec, storageKey, exercise.id, selectedVideoUrl])
+  }, [startSec, endSec, exercise?.id, selectedVideoUrl])
 
   if (!selectedVideoUrl) {
     return null

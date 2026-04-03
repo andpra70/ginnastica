@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
 import calistenichsConfig from './config/calistenichs.json'
@@ -211,6 +211,7 @@ function CardViewer({ card }) {
       return (
         <div className="figure-panel figure-panel-video">
           <ExerciseVideoLoop
+            key={`video-${card.id}`}
             exercise={exerciseVideo}
             videoSources={card.videoSources || []}
             onSegmentChange={(segment) => card.onVideoSegmentChange?.(card.id, segment)}
@@ -222,6 +223,7 @@ function CardViewer({ card }) {
     return (
       <div className="figure-card figure-card-3d">
         <ExerciseVideoLoop
+          key={`video-${card.id}`}
           exercise={exerciseVideo}
           videoSources={card.videoSources || []}
           onSegmentChange={undefined}
@@ -232,6 +234,7 @@ function CardViewer({ card }) {
   }
   return (
     <ExerciseRenderer
+      key={`viewer3d-${card.id}`}
       cardId={card.id}
       cameraView={card.cameraView}
       onCameraSaved={(payload) => card.onCameraSaved?.(card.id, payload)}
@@ -314,6 +317,8 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(() => splashEnabled)
 
   const [programCardsBase, setProgramCardsBase] = useState([])
+  const latestVideoByCardRef = useRef({})
+  const latestClipByCardRef = useRef({})
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -373,6 +378,37 @@ export default function App() {
 
   const selectedCard = programCards.find((c) => c.id === selectedCardId) || programCards[0]
 
+  const commitCardDraft = useCallback((cardId) => {
+    if (!cardId) return
+    const pendingVideo = latestVideoByCardRef.current[cardId]
+    const pendingClip = latestClipByCardRef.current[cardId]
+    if (!pendingVideo && !pendingClip) return
+
+    setProgramCardsBase((cards) => cards.map((c) => {
+      if (c.id !== cardId) return c
+      let next = c
+      if (pendingVideo) {
+        const current = c.videoSegment || {}
+        const sameVideo =
+          String(current.url || '') === String(pendingVideo.url || '')
+          && Number(current.start ?? 0) === Number(pendingVideo.start ?? 0)
+          && Number(current.end ?? 0) === Number(pendingVideo.end ?? 0)
+        if (!sameVideo) next = { ...next, videoSegment: pendingVideo }
+      }
+      if (pendingClip && pendingClip !== c.clipName) {
+        next = { ...next, clipName: pendingClip }
+      }
+      return next
+    }))
+  }, [])
+
+  const switchSelectedCard = useCallback((nextCardId) => {
+    const targetId = String(nextCardId || '')
+    if (!targetId || targetId === selectedCardId) return
+    commitCardDraft(selectedCardId)
+    setSelectedCardId(targetId)
+  }, [selectedCardId, commitCardDraft])
+
   const totalProgramSec = useMemo(
     () => programCards.reduce((sum, item) => sum + item.durationScaledSec, 0),
     [programCards]
@@ -401,6 +437,8 @@ export default function App() {
             setPlayMode(false)
             return 0
           }
+          const currentCardId = programCards[index]?.id
+          if (currentCardId) commitCardDraft(currentCardId)
           setCurrentRemaining(programCards[next].durationScaledSec)
           setSelectedCardId(programCards[next].id)
           return next
@@ -409,12 +447,13 @@ export default function App() {
       })
     }, 1000)
     return () => window.clearInterval(id)
-  }, [playMode, playRunning, programCards])
+  }, [playMode, playRunning, programCards, commitCardDraft])
 
   const currentCard = playMode ? programCards[playIndex] : selectedCard
 
   const startPlay = () => {
     if (!programCards.length) return
+    commitCardDraft(selectedCardId)
     setPlayMode(true)
     setPlayRunning(true)
     setPlayIndex(0)
@@ -439,6 +478,7 @@ export default function App() {
 
   const handleClipSelected = useCallback((cardId, clipName) => {
     if (!clipName) return
+    latestClipByCardRef.current[cardId] = clipName
     setProgramCardsBase((cards) => cards.map((c) => (c.id === cardId ? { ...c, clipName } : c)))
   }, [])
 
@@ -461,6 +501,7 @@ export default function App() {
       start: Number.isFinite(start) ? start : 0,
       end: Number.isFinite(end) ? Math.max((Number.isFinite(start) ? start : 0) + 1, end) : 20
     }
+    latestVideoByCardRef.current[cardId] = nextSegment
     setProgramCardsBase((cards) => cards.map((c) => {
       if (c.id !== cardId) return c
       const current = c.videoSegment || {}
@@ -565,12 +606,12 @@ export default function App() {
               className="icon-btn"
               onClick={() => {
                 const idx = Math.max(0, programCards.findIndex((c) => c.id === selectedCardId) - 1)
-                setSelectedCardId(programCards[idx]?.id || '')
+                switchSelectedCard(programCards[idx]?.id || '')
               }}
             >
               ‹
             </button>
-            <select value={selectedCardId} onChange={(e) => setSelectedCardId(e.target.value)}>
+            <select value={selectedCardId} onChange={(e) => switchSelectedCard(e.target.value)}>
               {programCards.map((card) => (
                 <option key={card.id} value={card.id}>{card.classKey} · {card.name}</option>
               ))}
@@ -580,7 +621,7 @@ export default function App() {
               className="icon-btn"
               onClick={() => {
                 const idx = Math.min(programCards.length - 1, programCards.findIndex((c) => c.id === selectedCardId) + 1)
-                setSelectedCardId(programCards[idx]?.id || '')
+                switchSelectedCard(programCards[idx]?.id || '')
               }}
             >
               ›
