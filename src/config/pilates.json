@@ -3,10 +3,6 @@
     "https://www.youtube.com/watch?v=uTYNPadVdic",
     "https://www.youtube.com/watch?v=xK5PMmRbs0k"
   ],
-  "ui": {
-    "splashEnabled": false,
-    "splashDurationMs": 2000
-  },
   "allenamento": {
     "livelli": {
       "base": {
@@ -45,7 +41,13 @@
         ],
         "breathing": "Inspira dal naso in 4 tempi, espira in 6 tempi.",
         "viewerType": "video",
-        "classKey": "warmup"
+        "classKey": "warmup",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-warmup-catcow",
@@ -66,7 +68,25 @@
         ],
         "breathing": "Espira in flessione, inspira in estensione.",
         "viewerType": "3d",
-        "classKey": "warmup"
+        "classKey": "warmup",
+        "clipName": "mixamo.com",
+        "cameraView": {
+          "camera": [
+            -13.545,
+            -0.849,
+            7.86
+          ],
+          "target": [
+            0.477,
+            0.033,
+            0.976
+          ]
+        },
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        }
       },
       {
         "id": "pilates-warmup-roll-down",
@@ -87,7 +107,13 @@
         ],
         "breathing": "Espira in discesa, inspira in risalita.",
         "viewerType": "video",
-        "classKey": "warmup"
+        "classKey": "warmup",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-hundred",
@@ -108,7 +134,25 @@
         ],
         "breathing": "5 pump inspiro, 5 pump espiro.",
         "viewerType": "3d",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "cameraView": {
+          "camera": [
+            10.906,
+            0.494,
+            8.899
+          ],
+          "target": [
+            -0.585,
+            -2.899,
+            -1.162
+          ]
+        },
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        }
       },
       {
         "id": "pilates-rollup",
@@ -129,7 +173,13 @@
         ],
         "breathing": "Inspira preparazione, espira in salita.",
         "viewerType": "video",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-single-leg-stretch",
@@ -150,7 +200,25 @@
         ],
         "breathing": "Espira ad ogni cambio gamba.",
         "viewerType": "3d",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "cameraView": {
+          "camera": [
+            6.517,
+            0.806,
+            9.562
+          ],
+          "target": [
+            0.775,
+            -3.569,
+            1.36
+          ]
+        },
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        }
       },
       {
         "id": "pilates-single-leg-circle",
@@ -171,7 +239,13 @@
         ],
         "breathing": "Respirazione fluida continua.",
         "viewerType": "video",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-swimming",
@@ -192,7 +266,13 @@
         ],
         "breathing": "Espira su due battute, inspira su due battute.",
         "viewerType": "3d",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-spine-stretch",
@@ -213,7 +293,13 @@
         ],
         "breathing": "Espira in flessione, inspira nel ritorno.",
         "viewerType": "video",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-stretch-hip",
@@ -234,7 +320,13 @@
         ],
         "breathing": "Respiri lenti e profondi.",
         "viewerType": "3d",
-        "classKey": "stretching"
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-stretch-hamstring",
@@ -255,7 +347,13 @@
         ],
         "breathing": "Espirazione lunga in fase di allungo.",
         "viewerType": "video",
-        "classKey": "stretching"
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-stretch-thoracic",
@@ -276,7 +374,13 @@
         ],
         "breathing": "Espira in apertura, inspira nel ritorno.",
         "viewerType": "3d",
-        "classKey": "stretching"
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       }
     ],
     "warmup": [
@@ -299,7 +403,13 @@
         ],
         "breathing": "Inspira dal naso in 4 tempi, espira in 6 tempi.",
         "viewerType": "video",
-        "classKey": "warmup"
+        "classKey": "warmup",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-warmup-catcow",
@@ -320,7 +430,25 @@
         ],
         "breathing": "Espira in flessione, inspira in estensione.",
         "viewerType": "3d",
-        "classKey": "warmup"
+        "classKey": "warmup",
+        "clipName": "mixamo.com",
+        "cameraView": {
+          "camera": [
+            -13.545,
+            -0.849,
+            7.86
+          ],
+          "target": [
+            0.477,
+            0.033,
+            0.976
+          ]
+        },
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        }
       },
       {
         "id": "pilates-warmup-roll-down",
@@ -341,30 +469,13 @@
         ],
         "breathing": "Espira in discesa, inspira in risalita.",
         "viewerType": "video",
-        "classKey": "warmup"
-      }
-    ],
-    "pilates": [
-      {
-        "id": "pilates-hundred",
-        "name": "The Hundred",
-        "type": "Pilates Core",
-        "animationType": "hollow",
-        "durationSec": 120,
-        "sets": 2,
-        "reps": "50-100 pump",
-        "execution": [
-          "Bacino neutro e addome in tenuta.",
-          "Braccia attive con pump corti e controllati.",
-          "Gambe in posizione coerente con il livello."
-        ],
-        "mistakes": [
-          "Collasso lombare.",
-          "Movimenti delle braccia troppo ampi."
-        ],
-        "breathing": "5 pump inspiro, 5 pump espiro.",
-        "viewerType": "3d",
-        "classKey": "esercizio"
+        "classKey": "warmup",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       }
     ],
     "esercizi": [
@@ -387,7 +498,25 @@
         ],
         "breathing": "5 pump inspiro, 5 pump espiro.",
         "viewerType": "3d",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "cameraView": {
+          "camera": [
+            10.906,
+            0.494,
+            8.899
+          ],
+          "target": [
+            -0.585,
+            -2.899,
+            -1.162
+          ]
+        },
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        }
       },
       {
         "id": "pilates-rollup",
@@ -408,7 +537,13 @@
         ],
         "breathing": "Inspira preparazione, espira in salita.",
         "viewerType": "video",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-single-leg-stretch",
@@ -429,7 +564,25 @@
         ],
         "breathing": "Espira ad ogni cambio gamba.",
         "viewerType": "3d",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "cameraView": {
+          "camera": [
+            6.517,
+            0.806,
+            9.562
+          ],
+          "target": [
+            0.775,
+            -3.569,
+            1.36
+          ]
+        },
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        }
       },
       {
         "id": "pilates-single-leg-circle",
@@ -450,7 +603,13 @@
         ],
         "breathing": "Respirazione fluida continua.",
         "viewerType": "video",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-swimming",
@@ -471,7 +630,13 @@
         ],
         "breathing": "Espira su due battute, inspira su due battute.",
         "viewerType": "3d",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-spine-stretch",
@@ -492,7 +657,13 @@
         ],
         "breathing": "Espira in flessione, inspira nel ritorno.",
         "viewerType": "video",
-        "classKey": "esercizio"
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       }
     ],
     "stretching": [
@@ -515,7 +686,13 @@
         ],
         "breathing": "Respiri lenti e profondi.",
         "viewerType": "3d",
-        "classKey": "stretching"
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-stretch-hamstring",
@@ -536,7 +713,13 @@
         ],
         "breathing": "Espirazione lunga in fase di allungo.",
         "viewerType": "video",
-        "classKey": "stretching"
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       },
       {
         "id": "pilates-stretch-thoracic",
@@ -557,7 +740,13 @@
         ],
         "breathing": "Espira in apertura, inspira nel ritorno.",
         "viewerType": "3d",
-        "classKey": "stretching"
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
       }
     ]
   }

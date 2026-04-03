@@ -257,6 +257,7 @@ function CardViewer({ card }) {
       clipName={card.clipName}
       onClipSelected={handleClipSelected}
       onClipOptions={handleClipOptions}
+      theme={card.theme}
     />
   )
 }
@@ -701,9 +702,9 @@ export default function App() {
           </section>
 
           {playMode ? (
-            currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, videoSources, isEditMode }} /> : null
+            currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, videoSources, isEditMode, theme }} /> : null
           ) : (
-            selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, videoSources, isEditMode }} /> : null
+            selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, videoSources, isEditMode, theme }} /> : null
           )}
 
           {isEditMode && selectedCard ? (

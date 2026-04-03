@@ -174,3 +174,4 @@ export default function FBXActor({ modelPath, config, onModelDebug, playbackCont
 }
 
 useFBX.preload(resolveAssetPath('/assets3d/Man2.fbx'))
+useFBX.preload(resolveAssetPath('/assets3d/claudia/Woman.fbx'))

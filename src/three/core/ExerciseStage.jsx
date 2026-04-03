@@ -32,8 +32,21 @@ function debugCameraLog(step, payload) {
   console.debug(`[Trainer3D][Camera] ${step}`, payload)
 }
 
-export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipName, onClipSelected, onClipOptions }) {
+export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipName, onClipSelected, onClipOptions, theme }) {
   const cfg = animationCfg.default || {}
+  const isFemaleTheme = theme === 'femmina'
+  const modelAssetPath = isFemaleTheme ? '/assets3d/claudia/Woman.fbx' : animationCfg.modelAsset
+  const renderCfg = useMemo(() => {
+    if (!isFemaleTheme) return cfg
+    return {
+      ...cfg,
+      textures: {
+        baseColor: '/assets3d/claudia/tex/rp_claudia_rigged_002_dif.jpg',
+        normal: '/assets3d/claudia/tex/rp_claudia_rigged_002_norm.jpg',
+        roughness: '/assets3d/claudia/tex/rp_claudia_rigged_002_gloss.jpg'
+      }
+    }
+  }, [cfg, isFemaleTheme])
   const controlsRef = useRef(null)
   const onCameraSavedRef = useRef(onCameraSaved)
   const onClipSelectedRef = useRef(onClipSelected)
@@ -163,8 +176,8 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
               <BoundsAutoFit signal={autoFitSignal} />
               <group key={cardId || 'viewer'}>
                 <ModelActor
-                  modelPath={animationCfg.modelAsset}
-                  config={cfg}
+                  modelPath={modelAssetPath}
+                  config={renderCfg}
                   onModelDebug={setFbxDebug}
                   playbackControls={{ clipName: selectedClipName, isPlaying: true }}
                 />
