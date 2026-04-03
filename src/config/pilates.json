@@ -86,7 +86,8 @@
           "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
           "start": 0,
           "end": 20
-        }
+        },
+        "modelAsset": "/assets3d/claudia/Swing Dancing.fbx"
       },
       {
         "id": "pilates-warmup-roll-down",
@@ -448,7 +449,8 @@
           "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
           "start": 0,
           "end": 20
-        }
+        },
+        "modelAsset": "/assets3d/claudia/Swing Dancing.fbx"
       },
       {
         "id": "pilates-warmup-roll-down",
