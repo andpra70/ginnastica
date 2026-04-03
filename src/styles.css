@@ -11,6 +11,137 @@
   --line: #c9d5e2;
 }
 
+[data-theme='femmina'] {
+  --bg: #fff1f6;
+  --bg-soft: #fff7fb;
+  --ink: #3a1730;
+  --ink-soft: #7f4b68;
+  --accent: #e84f9a;
+  --accent-2: #c23d8e;
+  --card: #fff9fc;
+  --line: #e8c7d9;
+}
+
+[data-theme='femmina'] body {
+  background:
+    radial-gradient(circle at 85% 10%, #ffe2f1 0, transparent 35%),
+    radial-gradient(circle at 10% 90%, #ffe7f7 0, transparent 36%),
+    var(--bg);
+}
+
+[data-theme='femmina'] .hero {
+  background: linear-gradient(120deg, #fff9fc, #fff0f8);
+}
+
+[data-theme='femmina'] .timer-strip {
+  background: #4f2140;
+  color: #ffeef8;
+  border-color: #78385f;
+}
+
+[data-theme='femmina'] .burger-btn,
+[data-theme='femmina'] .icon-btn,
+[data-theme='femmina'] .card-nav button,
+[data-theme='femmina'] .card-nav select,
+[data-theme='femmina'] .editor-grid input,
+[data-theme='femmina'] .editor-grid select,
+[data-theme='femmina'] .burger-level select {
+  border-color: #cf8ab0;
+  background: #fff8fc;
+  color: #5f294b;
+}
+
+[data-theme='femmina'] .burger-menu,
+[data-theme='femmina'] .burger-menu button {
+  background: #fff8fc;
+  color: #4f203d;
+}
+
+[data-theme='femmina'] .burger-menu button {
+  border-top-color: #f0d8e5;
+}
+
+[data-theme='femmina'] .burger-menu button.active {
+  background: #ffeef8;
+  color: #7f2f61;
+}
+
+[data-theme='femmina'] .burger-level {
+  border-top-color: #f0d8e5;
+}
+
+[data-theme='femmina'] .card-nav {
+  border-color: #e7c8dc !important;
+  background: #fff4fa !important;
+}
+
+[data-theme='femmina'] .program-card {
+  border-color: #e7c8dc;
+  background: #fffbfe;
+}
+
+[data-theme='femmina'] .vertical-sections article,
+[data-theme='femmina'] .detail article,
+[data-theme='femmina'] .video-loop-panel,
+[data-theme='femmina'] .grabber-preview,
+[data-theme='femmina'] .mini-tab-detail {
+  border-color: #e8cde0;
+  background: #fff7fb;
+}
+
+[data-theme='femmina'] .figure-card {
+  background: linear-gradient(165deg, #fff0f8, #ffffff 55%, #fff6fb);
+  border-color: #d9b3ca;
+}
+
+[data-theme='femmina'] .timer-chip {
+  border-color: #c23d8e;
+  background: #ffeef8;
+  color: #7f2f61;
+}
+
+[data-theme='femmina'] .editor-panel {
+  border-color: #e1c2d6 !important;
+  background: #fff4fa !important;
+}
+
+[data-theme='femmina'] .editor-actions button,
+[data-theme='femmina'] .video-save-row button,
+[data-theme='femmina'] .play-actions button,
+[data-theme='femmina'] .play-actions-inline button {
+  border-color: #c23d8e;
+  background: #ffeaf6;
+  color: #702a56;
+}
+
+[data-theme='femmina'] .video-actions button,
+[data-theme='femmina'] .grabber-actions button,
+[data-theme='femmina'] .grabber-download,
+[data-theme='femmina'] .fbx-debug-tools button {
+  border-color: #cf8ab0;
+  background: #fff0f8;
+  color: #612a4d;
+}
+
+[data-theme='femmina'] .app-footer {
+  border-top-color: #deb8ce;
+  color: #7a4a67;
+}
+
+[data-theme='femmina'] .brand-logo {
+  border-color: #c23d8e;
+  background: linear-gradient(180deg, #fff2fa, #ffe9f5);
+  color: #7d2f61;
+}
+
+[data-theme='femmina'] .splash-screen {
+  background: #2f1426;
+}
+
+[data-theme='femmina'] .splash-image {
+  border-color: #c97da7;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -23,6 +154,28 @@ body {
     radial-gradient(circle at 85% 10%, #d8ecff 0, transparent 35%),
     radial-gradient(circle at 10% 90%, #ffe3df 0, transparent 36%),
     var(--bg);
+}
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0a1522;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.splash-image {
+  width: 33vw;
+  height: 33vh;
+  max-width: 420px;
+  max-height: 280px;
+  min-width: 220px;
+  min-height: 146px;
+  object-fit: contain;
+  display: block;
+  border: 1px solid #33485f;
 }
 
 .layout {
@@ -895,11 +1048,6 @@ input[type='range'] {
   cursor: pointer;
 }
 
-.nav-play-controls {
-  display: flex;
-  gap: 0.18rem;
-}
-
 .icon-btn {
   border: 1px solid #8eb6dc;
   background: #f5faff;
@@ -914,7 +1062,7 @@ input[type='range'] {
 
 .card-nav {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   gap: 0.35rem;
   align-items: center;
   border: 1px solid #d7e3ee !important;
@@ -937,6 +1085,12 @@ input[type='range'] {
   background: #fff;
   padding: 0.2rem;
   font-family: inherit;
+}
+
+.card-nav-play {
+  display: flex;
+  align-items: center;
+  gap: 0.16rem;
 }
 
 .editor-panel {
@@ -1132,7 +1286,7 @@ input[type='range'] {
   }
 
   .card-nav {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr auto auto;
   }
 
   .vertical-sections {

@@ -1,0 +1,564 @@
+{
+  "videoSources": [
+    "https://www.youtube.com/watch?v=uTYNPadVdic",
+    "https://www.youtube.com/watch?v=xK5PMmRbs0k"
+  ],
+  "ui": {
+    "splashEnabled": true,
+    "splashDurationMs": 2000
+  },
+  "allenamento": {
+    "livelli": {
+      "base": {
+        "label": "Base",
+        "setMultiplier": 1,
+        "durationMultiplier": 1
+      },
+      "intermedio": {
+        "label": "Intermedio",
+        "setMultiplier": 1.2,
+        "durationMultiplier": 1.15
+      },
+      "avanzato": {
+        "label": "Avanzato",
+        "setMultiplier": 1.35,
+        "durationMultiplier": 1.3
+      }
+    },
+    "cards": [
+      {
+        "id": "pilates-warmup-breath",
+        "name": "Breathing Prep",
+        "type": "Warmup",
+        "animationType": "plank",
+        "durationSec": 90,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "Respirazione laterale toracica in posizione neutra.",
+          "Coste ampie in inspirazione, addome attivo in espirazione.",
+          "Spalle basse e collo rilassato."
+        ],
+        "mistakes": [
+          "Sollevare le spalle durante l'inspiro.",
+          "Bloccare il respiro nelle transizioni."
+        ],
+        "breathing": "Inspira dal naso in 4 tempi, espira in 6 tempi.",
+        "viewerType": "video",
+        "classKey": "warmup"
+      },
+      {
+        "id": "pilates-warmup-catcow",
+        "name": "Cat Cow Control",
+        "type": "Warmup",
+        "animationType": "deadBug",
+        "durationSec": 90,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "Alterna flessione ed estensione della colonna in quadrupedia.",
+          "Muovi una vertebra alla volta.",
+          "Mantieni appoggi stabili di mani e ginocchia."
+        ],
+        "mistakes": [
+          "Movimento troppo rapido.",
+          "Caricare eccessivamente il tratto cervicale."
+        ],
+        "breathing": "Espira in flessione, inspira in estensione.",
+        "viewerType": "3d",
+        "classKey": "warmup"
+      },
+      {
+        "id": "pilates-warmup-roll-down",
+        "name": "Standing Roll Down",
+        "type": "Warmup",
+        "animationType": "hollow",
+        "durationSec": 100,
+        "sets": 1,
+        "reps": "6-8",
+        "execution": [
+          "Scendi articolando la colonna dall'alto verso il basso.",
+          "Peso distribuito al centro dei piedi.",
+          "Risalita lenta con addome attivo."
+        ],
+        "mistakes": [
+          "Piegarsi a blocco senza articolazione.",
+          "Perdere l'allineamento del bacino."
+        ],
+        "breathing": "Espira in discesa, inspira in risalita.",
+        "viewerType": "video",
+        "classKey": "warmup"
+      },
+      {
+        "id": "pilates-hundred",
+        "name": "The Hundred",
+        "type": "Pilates Core",
+        "animationType": "hollow",
+        "durationSec": 120,
+        "sets": 2,
+        "reps": "50-100 pump",
+        "execution": [
+          "Bacino neutro e addome in tenuta.",
+          "Braccia attive con pump corti e controllati.",
+          "Gambe in posizione coerente con il livello."
+        ],
+        "mistakes": [
+          "Collasso lombare.",
+          "Movimenti delle braccia troppo ampi."
+        ],
+        "breathing": "5 pump inspiro, 5 pump espiro.",
+        "viewerType": "3d",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-rollup",
+        "name": "Roll Up",
+        "type": "Pilates Mat",
+        "animationType": "pike",
+        "durationSec": 110,
+        "sets": 2,
+        "reps": "6-10",
+        "execution": [
+          "Partenza supina con braccia lunghe.",
+          "Srotola la colonna in salita e discesa.",
+          "Raggiungi allungo senza perdere controllo."
+        ],
+        "mistakes": [
+          "Slancio eccessivo.",
+          "Spalle chiuse durante la salita."
+        ],
+        "breathing": "Inspira preparazione, espira in salita.",
+        "viewerType": "video",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-single-leg-stretch",
+        "name": "Single Leg Stretch",
+        "type": "Pilates Core",
+        "animationType": "deadBug",
+        "durationSec": 100,
+        "sets": 3,
+        "reps": "10+10",
+        "execution": [
+          "Cambia gamba mantenendo addome centrato.",
+          "Bacino stabile durante lo scambio.",
+          "Traiettoria delle mani pulita e simmetrica."
+        ],
+        "mistakes": [
+          "Trazione del collo.",
+          "Arco lombare in estensione gamba."
+        ],
+        "breathing": "Espira ad ogni cambio gamba.",
+        "viewerType": "3d",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-single-leg-circle",
+        "name": "Single Leg Circle",
+        "type": "Pilates Stability",
+        "animationType": "lunge",
+        "durationSec": 100,
+        "sets": 2,
+        "reps": "8+8",
+        "execution": [
+          "Cerchi piccoli e controllati dalla testa del femore.",
+          "Bacino fermo durante il movimento.",
+          "Gamba di appoggio attiva."
+        ],
+        "mistakes": [
+          "Oscillare con tutto il bacino.",
+          "Perdere la linea della gamba in alto."
+        ],
+        "breathing": "Respirazione fluida continua.",
+        "viewerType": "video",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-swimming",
+        "name": "Swimming",
+        "type": "Pilates Posterior Chain",
+        "animationType": "mountainClimber",
+        "durationSec": 90,
+        "sets": 3,
+        "reps": "30-40 sec",
+        "execution": [
+          "Alterna braccio e gamba opposti in prona.",
+          "Allungo lungo senza compressione lombare.",
+          "Ritmo regolare e controllato."
+        ],
+        "mistakes": [
+          "Iperestendere il tratto lombare.",
+          "Muovere in modo scoordinato."
+        ],
+        "breathing": "Espira su due battute, inspira su due battute.",
+        "viewerType": "3d",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-spine-stretch",
+        "name": "Spine Stretch Forward",
+        "type": "Pilates Mobility",
+        "animationType": "pike",
+        "durationSec": 90,
+        "sets": 2,
+        "reps": "6-8",
+        "execution": [
+          "Parti seduto con schiena alta.",
+          "Fletti la colonna in avanti senza collassare.",
+          "Ritorna vertebra per vertebra."
+        ],
+        "mistakes": [
+          "Spingere in allungo con rimbalzo.",
+          "Perdere attivazione addominale."
+        ],
+        "breathing": "Espira in flessione, inspira nel ritorno.",
+        "viewerType": "video",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-stretch-hip",
+        "name": "Hip Flexor Stretch",
+        "type": "Stretching",
+        "animationType": "lunge",
+        "durationSec": 110,
+        "sets": 1,
+        "reps": "tenuta",
+        "execution": [
+          "Retroversione del bacino in affondo statico.",
+          "Contrai il gluteo della gamba posteriore.",
+          "Mantieni il busto verticale."
+        ],
+        "mistakes": [
+          "Inarcare la zona lombare.",
+          "Spinta eccessiva in avanti del ginocchio."
+        ],
+        "breathing": "Respiri lenti e profondi.",
+        "viewerType": "3d",
+        "classKey": "stretching"
+      },
+      {
+        "id": "pilates-stretch-hamstring",
+        "name": "Hamstring Stretch",
+        "type": "Stretching",
+        "animationType": "hollow",
+        "durationSec": 110,
+        "sets": 1,
+        "reps": "tenuta",
+        "execution": [
+          "Allunga la catena posteriore senza dolore.",
+          "Mantieni il rachide lungo.",
+          "Rilassa le spalle durante la tenuta."
+        ],
+        "mistakes": [
+          "Compensare piegando la schiena.",
+          "Rimbalzi rapidi in allungo."
+        ],
+        "breathing": "Espirazione lunga in fase di allungo.",
+        "viewerType": "video",
+        "classKey": "stretching"
+      },
+      {
+        "id": "pilates-stretch-thoracic",
+        "name": "Thoracic Rotation Stretch",
+        "type": "Stretching",
+        "animationType": "plank",
+        "durationSec": 100,
+        "sets": 1,
+        "reps": "tenuta alternata",
+        "execution": [
+          "Rotazione toracica controllata da quadrupedia.",
+          "Bacino stabile durante l'apertura.",
+          "Alterna i lati in modo simmetrico."
+        ],
+        "mistakes": [
+          "Ruotare con il bacino.",
+          "Bloccare il ritmo respiratorio."
+        ],
+        "breathing": "Espira in apertura, inspira nel ritorno.",
+        "viewerType": "3d",
+        "classKey": "stretching"
+      }
+    ],
+    "warmup": [
+      {
+        "id": "pilates-warmup-breath",
+        "name": "Breathing Prep",
+        "type": "Warmup",
+        "animationType": "plank",
+        "durationSec": 90,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "Respirazione laterale toracica in posizione neutra.",
+          "Coste ampie in inspirazione, addome attivo in espirazione.",
+          "Spalle basse e collo rilassato."
+        ],
+        "mistakes": [
+          "Sollevare le spalle durante l'inspiro.",
+          "Bloccare il respiro nelle transizioni."
+        ],
+        "breathing": "Inspira dal naso in 4 tempi, espira in 6 tempi.",
+        "viewerType": "video",
+        "classKey": "warmup"
+      },
+      {
+        "id": "pilates-warmup-catcow",
+        "name": "Cat Cow Control",
+        "type": "Warmup",
+        "animationType": "deadBug",
+        "durationSec": 90,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "Alterna flessione ed estensione della colonna in quadrupedia.",
+          "Muovi una vertebra alla volta.",
+          "Mantieni appoggi stabili di mani e ginocchia."
+        ],
+        "mistakes": [
+          "Movimento troppo rapido.",
+          "Caricare eccessivamente il tratto cervicale."
+        ],
+        "breathing": "Espira in flessione, inspira in estensione.",
+        "viewerType": "3d",
+        "classKey": "warmup"
+      },
+      {
+        "id": "pilates-warmup-roll-down",
+        "name": "Standing Roll Down",
+        "type": "Warmup",
+        "animationType": "hollow",
+        "durationSec": 100,
+        "sets": 1,
+        "reps": "6-8",
+        "execution": [
+          "Scendi articolando la colonna dall'alto verso il basso.",
+          "Peso distribuito al centro dei piedi.",
+          "Risalita lenta con addome attivo."
+        ],
+        "mistakes": [
+          "Piegarsi a blocco senza articolazione.",
+          "Perdere l'allineamento del bacino."
+        ],
+        "breathing": "Espira in discesa, inspira in risalita.",
+        "viewerType": "video",
+        "classKey": "warmup"
+      }
+    ],
+    "pilates": [
+      {
+        "id": "pilates-hundred",
+        "name": "The Hundred",
+        "type": "Pilates Core",
+        "animationType": "hollow",
+        "durationSec": 120,
+        "sets": 2,
+        "reps": "50-100 pump",
+        "execution": [
+          "Bacino neutro e addome in tenuta.",
+          "Braccia attive con pump corti e controllati.",
+          "Gambe in posizione coerente con il livello."
+        ],
+        "mistakes": [
+          "Collasso lombare.",
+          "Movimenti delle braccia troppo ampi."
+        ],
+        "breathing": "5 pump inspiro, 5 pump espiro.",
+        "viewerType": "3d",
+        "classKey": "esercizio"
+      }
+    ],
+    "esercizi": [
+      {
+        "id": "pilates-hundred",
+        "name": "The Hundred",
+        "type": "Pilates Core",
+        "animationType": "hollow",
+        "durationSec": 120,
+        "sets": 2,
+        "reps": "50-100 pump",
+        "execution": [
+          "Bacino neutro e addome in tenuta.",
+          "Braccia attive con pump corti e controllati.",
+          "Gambe in posizione coerente con il livello."
+        ],
+        "mistakes": [
+          "Collasso lombare.",
+          "Movimenti delle braccia troppo ampi."
+        ],
+        "breathing": "5 pump inspiro, 5 pump espiro.",
+        "viewerType": "3d",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-rollup",
+        "name": "Roll Up",
+        "type": "Pilates Mat",
+        "animationType": "pike",
+        "durationSec": 110,
+        "sets": 2,
+        "reps": "6-10",
+        "execution": [
+          "Partenza supina con braccia lunghe.",
+          "Srotola la colonna in salita e discesa.",
+          "Raggiungi allungo senza perdere controllo."
+        ],
+        "mistakes": [
+          "Slancio eccessivo.",
+          "Spalle chiuse durante la salita."
+        ],
+        "breathing": "Inspira preparazione, espira in salita.",
+        "viewerType": "video",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-single-leg-stretch",
+        "name": "Single Leg Stretch",
+        "type": "Pilates Core",
+        "animationType": "deadBug",
+        "durationSec": 100,
+        "sets": 3,
+        "reps": "10+10",
+        "execution": [
+          "Cambia gamba mantenendo addome centrato.",
+          "Bacino stabile durante lo scambio.",
+          "Traiettoria delle mani pulita e simmetrica."
+        ],
+        "mistakes": [
+          "Trazione del collo.",
+          "Arco lombare in estensione gamba."
+        ],
+        "breathing": "Espira ad ogni cambio gamba.",
+        "viewerType": "3d",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-single-leg-circle",
+        "name": "Single Leg Circle",
+        "type": "Pilates Stability",
+        "animationType": "lunge",
+        "durationSec": 100,
+        "sets": 2,
+        "reps": "8+8",
+        "execution": [
+          "Cerchi piccoli e controllati dalla testa del femore.",
+          "Bacino fermo durante il movimento.",
+          "Gamba di appoggio attiva."
+        ],
+        "mistakes": [
+          "Oscillare con tutto il bacino.",
+          "Perdere la linea della gamba in alto."
+        ],
+        "breathing": "Respirazione fluida continua.",
+        "viewerType": "video",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-swimming",
+        "name": "Swimming",
+        "type": "Pilates Posterior Chain",
+        "animationType": "mountainClimber",
+        "durationSec": 90,
+        "sets": 3,
+        "reps": "30-40 sec",
+        "execution": [
+          "Alterna braccio e gamba opposti in prona.",
+          "Allungo lungo senza compressione lombare.",
+          "Ritmo regolare e controllato."
+        ],
+        "mistakes": [
+          "Iperestendere il tratto lombare.",
+          "Muovere in modo scoordinato."
+        ],
+        "breathing": "Espira su due battute, inspira su due battute.",
+        "viewerType": "3d",
+        "classKey": "esercizio"
+      },
+      {
+        "id": "pilates-spine-stretch",
+        "name": "Spine Stretch Forward",
+        "type": "Pilates Mobility",
+        "animationType": "pike",
+        "durationSec": 90,
+        "sets": 2,
+        "reps": "6-8",
+        "execution": [
+          "Parti seduto con schiena alta.",
+          "Fletti la colonna in avanti senza collassare.",
+          "Ritorna vertebra per vertebra."
+        ],
+        "mistakes": [
+          "Spingere in allungo con rimbalzo.",
+          "Perdere attivazione addominale."
+        ],
+        "breathing": "Espira in flessione, inspira nel ritorno.",
+        "viewerType": "video",
+        "classKey": "esercizio"
+      }
+    ],
+    "stretching": [
+      {
+        "id": "pilates-stretch-hip",
+        "name": "Hip Flexor Stretch",
+        "type": "Stretching",
+        "animationType": "lunge",
+        "durationSec": 110,
+        "sets": 1,
+        "reps": "tenuta",
+        "execution": [
+          "Retroversione del bacino in affondo statico.",
+          "Contrai il gluteo della gamba posteriore.",
+          "Mantieni il busto verticale."
+        ],
+        "mistakes": [
+          "Inarcare la zona lombare.",
+          "Spinta eccessiva in avanti del ginocchio."
+        ],
+        "breathing": "Respiri lenti e profondi.",
+        "viewerType": "3d",
+        "classKey": "stretching"
+      },
+      {
+        "id": "pilates-stretch-hamstring",
+        "name": "Hamstring Stretch",
+        "type": "Stretching",
+        "animationType": "hollow",
+        "durationSec": 110,
+        "sets": 1,
+        "reps": "tenuta",
+        "execution": [
+          "Allunga la catena posteriore senza dolore.",
+          "Mantieni il rachide lungo.",
+          "Rilassa le spalle durante la tenuta."
+        ],
+        "mistakes": [
+          "Compensare piegando la schiena.",
+          "Rimbalzi rapidi in allungo."
+        ],
+        "breathing": "Espirazione lunga in fase di allungo.",
+        "viewerType": "video",
+        "classKey": "stretching"
+      },
+      {
+        "id": "pilates-stretch-thoracic",
+        "name": "Thoracic Rotation Stretch",
+        "type": "Stretching",
+        "animationType": "plank",
+        "durationSec": 100,
+        "sets": 1,
+        "reps": "tenuta alternata",
+        "execution": [
+          "Rotazione toracica controllata da quadrupedia.",
+          "Bacino stabile durante l'apertura.",
+          "Alterna i lati in modo simmetrico."
+        ],
+        "mistakes": [
+          "Ruotare con il bacino.",
+          "Bloccare il ritmo respiratorio."
+        ],
+        "breathing": "Espira in apertura, inspira nel ritorno.",
+        "viewerType": "3d",
+        "classKey": "stretching"
+      }
+    ]
+  }
+}

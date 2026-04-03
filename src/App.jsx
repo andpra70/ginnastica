@@ -2,7 +2,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
 import RegionVideoGrabber from './components/RegionVideoGrabber'
-import appConfig from './config/config.json'
+import calistenichsConfig from './config/calistenichs.json'
+import pilatesConfig from './config/pilates.json'
+
+const TRAINING_CONFIGS = {
+  calistenichs: {
+    label: 'Calistenichs',
+    config: calistenichsConfig
+  },
+  pilates: {
+    label: 'Pilates',
+    config: pilatesConfig
+  }
+}
 
 function formatTime(totalSeconds) {
   const value = Math.max(0, Math.floor(totalSeconds))
@@ -44,6 +56,16 @@ function ensureYouTubeApi() {
 function getEditMode() {
   if (typeof window === 'undefined') return false
   return new URLSearchParams(window.location.search).get('edit') === '1'
+}
+
+function getSplashModeFromUrl() {
+  if (typeof window === 'undefined') return null
+  const value = new URLSearchParams(window.location.search).get('splash')
+  if (value == null) return null
+  const normalized = String(value).trim().toLowerCase()
+  if (['0', 'false', 'off', 'no'].includes(normalized)) return false
+  if (['1', 'true', 'on', 'yes'].includes(normalized)) return true
+  return null
 }
 
 function scaleReps(reps, factor) {
@@ -92,10 +114,19 @@ function cardsFromAllenamento(allenamento) {
   return orderByClass([...warmup, ...esercizi, ...stretching])
 }
 
-function readSavedProgramCards() {
+function getProgramStorageKey(trainingKey) {
+  return `ginnastica.program.json.${trainingKey}`
+}
+
+function getSegmentsStorageKey(trainingKey) {
+  return `ginnastica.program.videoSegments.${trainingKey}`
+}
+
+function readSavedProgramCards(trainingKey) {
   if (typeof window === 'undefined') return null
   try {
-    const raw = window.localStorage.getItem('ginnastica.program.json')
+    const raw = window.localStorage.getItem(getProgramStorageKey(trainingKey))
+      || (trainingKey === 'calistenichs' ? window.localStorage.getItem('ginnastica.program.json') : null)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     return cardsFromAllenamento(parsed?.allenamento)
@@ -104,10 +135,10 @@ function readSavedProgramCards() {
   }
 }
 
-function toExportProgram(cards, levels) {
+function toExportProgram(cards, levels, videoSources = []) {
   const normalizedCards = orderByClass(cards.map(sanitizeCard))
   return {
-    videoSources: appConfig.videoSources || [],
+    videoSources,
     allenamento: {
       livelli: levels,
       cards: normalizedCards,
@@ -118,13 +149,22 @@ function toExportProgram(cards, levels) {
   }
 }
 
-function readStoredVideoSegments() {
+function readStoredVideoSegments(trainingKey) {
   if (typeof window === 'undefined') return {}
   try {
-    const raw = window.localStorage.getItem('ginnastica.program.videoSegments')
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === 'object' ? parsed : {}
+    const raw = window.localStorage.getItem(getSegmentsStorageKey(trainingKey))
+      || (trainingKey === 'calistenichs' ? window.localStorage.getItem('ginnastica.program.videoSegments') : null)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return parsed && typeof parsed === 'object' ? parsed : {}
+    }
+
+    const programRaw = window.localStorage.getItem(getProgramStorageKey(trainingKey))
+      || (trainingKey === 'calistenichs' ? window.localStorage.getItem('ginnastica.program.json') : null)
+    if (!programRaw) return {}
+    const programParsed = JSON.parse(programRaw)
+    const segments = programParsed?.videoSegments
+    return segments && typeof segments === 'object' ? segments : {}
   } catch {
     return {}
   }
@@ -284,6 +324,16 @@ function ProgramCard({ card }) {
 export default function App() {
   const [activeView, setActiveView] = useState('trainer')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'maschio'
+    const saved = window.localStorage.getItem('ginnastica.theme')
+    return saved === 'femmina' ? 'femmina' : 'maschio'
+  })
+  const [trainingKey, setTrainingKey] = useState(() => {
+    if (typeof window === 'undefined') return 'calistenichs'
+    const saved = window.localStorage.getItem('ginnastica.training.key')
+    return TRAINING_CONFIGS[saved] ? saved : 'calistenichs'
+  })
   const [level, setLevel] = useState('base')
   const [playMode, setPlayMode] = useState(false)
   const [playRunning, setPlayRunning] = useState(false)
@@ -293,35 +343,55 @@ export default function App() {
 
   const isEditMode = getEditMode()
   const logoSrc = `${import.meta.env.BASE_URL}decathlon.svg`
+  const splashImageSrc = `${import.meta.env.BASE_URL}sports-icons-vector.jpg`
 
+  const appConfig = TRAINING_CONFIGS[trainingKey]?.config || calistenichsConfig
+  const trainingLabel = TRAINING_CONFIGS[trainingKey]?.label || trainingKey
   const allCfg = appConfig?.allenamento || {}
   const defaultVideoUrl = appConfig.videoSources?.[0] || ''
-  const [storedSegments, setStoredSegments] = useState(() => readStoredVideoSegments())
+  const [storedSegments, setStoredSegments] = useState({})
+  const levels = allCfg.livelli || {}
+  const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
+  const splashUrlMode = getSplashModeFromUrl()
+  const splashEnabled = splashUrlMode ?? (appConfig?.ui?.splashEnabled !== false)
+  const splashDurationMs = Math.min(3000, Math.max(0, Number(appConfig?.ui?.splashDurationMs ?? 2000)))
+  const [showSplash, setShowSplash] = useState(() => splashEnabled)
+
+  const [programCardsBase, setProgramCardsBase] = useState([])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ginnastica.training.key', trainingKey)
+    }
+
+    const saved = readSavedProgramCards(trainingKey)
+    const fromConfig = cardsFromAllenamento(allCfg)
+    setProgramCardsBase(saved?.length ? saved : fromConfig)
+
+    const segments = readStoredVideoSegments(trainingKey)
+    setStoredSegments(segments)
+    setPlayMode(false)
+    setPlayRunning(false)
+    setPlayIndex(0)
+
+  }, [trainingKey, allCfg])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    try {
-      const raw = window.localStorage.getItem('ginnastica.program.json')
-      if (!raw) return
-      const parsed = JSON.parse(raw)
-      const cards = cardsFromAllenamento(parsed?.allenamento)
-      if (cards?.length) setProgramCardsBase(cards)
-      const segments = parsed?.videoSegments
-      if (!segments || typeof segments !== 'object') return
-      window.localStorage.setItem('ginnastica.program.videoSegments', JSON.stringify(segments))
-      setStoredSegments(segments)
-    } catch {
-      // Ignore malformed stored json
-    }
-  }, [])
-  const levels = allCfg.livelli || {}
-  const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
+    window.localStorage.setItem('ginnastica.theme', theme)
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
 
-  const [programCardsBase, setProgramCardsBase] = useState(() => {
-    const saved = readSavedProgramCards()
-    if (saved?.length) return saved
-    return cardsFromAllenamento(allCfg)
-  })
+  useEffect(() => {
+    const levelKeys = Object.keys(levels)
+    if (levelKeys.length && !levels[level]) setLevel(levelKeys[0])
+  }, [levels, level])
+
+  useEffect(() => {
+    if (!showSplash) return undefined
+    const timeoutId = window.setTimeout(() => setShowSplash(false), splashDurationMs)
+    return () => window.clearTimeout(timeoutId)
+  }, [showSplash, splashDurationMs])
 
   const programCards = useMemo(() => {
     const setMultiplier = levelCfg?.setMultiplier || 1
@@ -404,7 +474,7 @@ export default function App() {
   }
 
   const saveProgramJson = () => {
-    const storageSegments = readStoredVideoSegments()
+    const storageSegments = readStoredVideoSegments(trainingKey)
     const computedSegments = {}
     for (const card of programCards) {
       const seg = card.videoSegment || {}
@@ -415,19 +485,19 @@ export default function App() {
       }
     }
     const videoSegments = { ...computedSegments, ...storageSegments }
-    window.localStorage.setItem('ginnastica.program.videoSegments', JSON.stringify(videoSegments))
+    window.localStorage.setItem(getSegmentsStorageKey(trainingKey), JSON.stringify(videoSegments))
     setStoredSegments(videoSegments)
 
     const payload = {
-      ...toExportProgram(programCardsBase, levels),
+      ...toExportProgram(programCardsBase, levels, appConfig.videoSources || []),
       videoSegments
     }
-    localStorage.setItem('ginnastica.program.json', JSON.stringify(payload))
+    localStorage.setItem(getProgramStorageKey(trainingKey), JSON.stringify(payload))
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'program-allenamento.json'
+    a.download = `${trainingKey}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -441,37 +511,42 @@ export default function App() {
 
   return (
     <main className="layout compact-layout">
+      {showSplash ? (
+        <div
+          className="splash-screen"
+          role="button"
+          tabIndex={0}
+          aria-label="Chiudi splash"
+          onClick={() => setShowSplash(false)}
+          onTouchStart={() => setShowSplash(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') setShowSplash(false)
+          }}
+        >
+          <img src={splashImageSrc} alt="Sports splash" className="splash-image" />
+        </div>
+      ) : null}
       <header className="hero compact-hero">
         <div className="brand-row">
           <img src={logoSrc} alt="Decathlon" className="brand-logo-img" />
           <h1>Trainer</h1>
           <div className="burger-wrap">
-            {activeView === 'trainer' ? (
-              <div className="nav-play-controls" aria-label="Controlli playback">
-                {!playMode ? (
-                  <button type="button" className="icon-btn" title="Play" aria-label="Play" onClick={startPlay}>▶</button>
-                ) : (
-                  <>
-                    <button type="button" className="icon-btn" title="Stop" aria-label="Stop" onClick={stopPlay}>■</button>
-                    <button
-                      type="button"
-                      className="icon-btn"
-                      title={playRunning ? 'Pausa' : 'Continua'}
-                      aria-label={playRunning ? 'Pausa' : 'Continua'}
-                      onClick={() => setPlayRunning((v) => !v)}
-                    >
-                      {playRunning ? '❚❚' : '▶'}
-                    </button>
-                  </>
-                )}
-              </div>
-            ) : null}
             <button type="button" className="burger-btn" aria-label="Apri menu sezioni" onClick={() => setMenuOpen((v) => !v)}>☰</button>
             {menuOpen ? (
               <div className="burger-menu">
                 <button type="button" className={activeView === 'trainer' ? 'active' : ''} onClick={() => { setActiveView('trainer'); setMenuOpen(false) }}>Trainer</button>
                 <button type="button" className={activeView === 'video' ? 'active' : ''} onClick={() => { setActiveView('video'); setMenuOpen(false) }}>Video Editor</button>
                 <button type="button" className={activeView === 'grabber' ? 'active' : ''} onClick={() => { setActiveView('grabber'); setMenuOpen(false) }}>Grabber</button>
+                {activeView === 'trainer' ? (
+                  <label className="burger-level">
+                    Training
+                    <select value={trainingKey} onChange={(e) => setTrainingKey(e.target.value)}>
+                      {Object.entries(TRAINING_CONFIGS).map(([key, value]) => (
+                        <option key={key} value={key}>{value.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 {activeView === 'trainer' ? (
                   <label className="burger-level">
                     Livello
@@ -482,6 +557,13 @@ export default function App() {
                     </select>
                   </label>
                 ) : null}
+                <label className="burger-level">
+                  Tema
+                  <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+                    <option value="maschio">Maschio</option>
+                    <option value="femmina">Femmina</option>
+                  </select>
+                </label>
               </div>
             ) : null}
           </div>
@@ -492,6 +574,7 @@ export default function App() {
         <>
           <section className="timer-strip">
             <div className="timer-metrics">
+              <div><strong>Training:</strong> {trainingLabel}</div>
               <div><strong>Totale:</strong> {formatTime(totalRemaining)}</div>
               <div><strong>Scheda:</strong> {formatTime(currentRemaining)}</div>
               <div><strong>Attuale:</strong> {currentCard?.name || 'N/A'}</div>
@@ -524,6 +607,24 @@ export default function App() {
             >
               ›
             </button>
+            <div className="card-nav-play" aria-label="Controlli playback">
+              {!playMode ? (
+                <button type="button" className="icon-btn" title="Play" aria-label="Play" onClick={startPlay}>▶</button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    title={playRunning ? 'Pausa' : 'Continua'}
+                    aria-label={playRunning ? 'Pausa' : 'Continua'}
+                    onClick={() => setPlayRunning((v) => !v)}
+                  >
+                    {playRunning ? '❚❚' : '▶'}
+                  </button>
+                  <button type="button" className="icon-btn" title="Stop" aria-label="Stop" onClick={stopPlay}>■</button>
+                </>
+              )}
+            </div>
           </section>
 
           {playMode ? (
