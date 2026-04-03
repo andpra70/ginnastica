@@ -11,7 +11,23 @@ export const warmupSteps = [
   { name: 'Plank dinamico corto', duration: '2 min', cue: 'Attiva core e glutei prima del lavoro principale.' }
 ]
 
-export const exercises = [
+const EXERCISE_VIDEO_URL = 'https://www.youtube.com/watch?v=uTYNPadVdic'
+
+const VIDEO_LOOP_BY_ANIMATION = {
+  pushup: { start: 8, end: 26 },
+  squat: { start: 26, end: 46 },
+  plank: { start: 46, end: 64 },
+  lunge: { start: 64, end: 84 },
+  pike: { start: 84, end: 104 },
+  hollow: { start: 104, end: 122 },
+  row: { start: 122, end: 142 },
+  jumpSquat: { start: 142, end: 162 },
+  gluteBridge: { start: 162, end: 182 },
+  mountainClimber: { start: 182, end: 202 },
+  deadBug: { start: 202, end: 222 }
+}
+
+const rawExercises = [
   {
     id: 'push-up-base',
     name: 'Push-up Base',
@@ -244,6 +260,18 @@ export const exercises = [
     breathing: 'Espira quando estendi, inspira tornando in posizione centrale.'
   }
 ]
+
+export const exercises = rawExercises.map((exercise) => {
+  const loop = VIDEO_LOOP_BY_ANIMATION[exercise.animationType] ?? { start: 0, end: 20 }
+  return {
+    ...exercise,
+    video: {
+      url: EXERCISE_VIDEO_URL,
+      start: loop.start,
+      end: loop.end
+    }
+  }
+})
 
 export function buildWorkout(durationMin, selectedLevel) {
   const available = exercises.filter((ex) => levelRank[ex.level] <= levelRank[selectedLevel])

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import ExerciseRenderer from './three/ExerciseRenderer'
+import ExerciseVideoLoop from './components/ExerciseVideoLoop'
+import RegionVideoGrabber from './components/RegionVideoGrabber'
 import { buildWorkout, exercises, warmupSteps } from './data/exercises'
 
 export default function App() {
@@ -95,6 +97,8 @@ export default function App() {
           <ExerciseRenderer type={selectedExercise.animationType} />
         </div>
 
+        <ExerciseVideoLoop exercise={selectedExercise} />
+
         <div className="detail-grid">
           <article>
             <h4>Esecuzione corretta</h4>
@@ -116,6 +120,8 @@ export default function App() {
           </article>
         </div>
       </section>
+
+      <RegionVideoGrabber />
     </main>
   )
 }

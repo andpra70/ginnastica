@@ -101,3 +101,10 @@ Esegue:
 - `git add .`
 - `git commit -m "Update watermarks site"`
 - `git push`
+
+
+### Video
+
+https://www.youtube.com/watch?v=uTYNPadVdic
+
+https://www.youtube.com/watch?v=xK5PMmRbs0k

@@ -146,6 +146,243 @@ input[type='range'] {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.video-loop-panel {
+  margin: 0.9rem 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.8rem;
+  background: #fffefc;
+}
+
+.video-loop-head h4 {
+  margin: 0;
+}
+
+.video-loop-head p {
+  margin: 0.3rem 0 0.6rem;
+}
+
+.video-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #c9d8df;
+  background: #000;
+}
+
+.video-frame iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.video-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+}
+
+.video-actions button {
+  border: 1px solid var(--accent-2);
+  background: #eef7fb;
+  color: #123e50;
+  border-radius: 10px;
+  padding: 0.45rem 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.audio-clip-editor {
+  position: relative;
+  margin-top: 0.7rem;
+  height: 74px;
+  border-radius: 12px;
+  border: 1px solid #c8d6de;
+  background: #f8fbfd;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.audio-wave {
+  position: absolute;
+  inset: 10px 0 18px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #9eb6c4 0,
+      #9eb6c4 2px,
+      transparent 2px,
+      transparent 8px
+    );
+  opacity: 0.75;
+}
+
+.audio-segment-active {
+  position: absolute;
+  top: 10px;
+  bottom: 18px;
+  background: linear-gradient(90deg, rgb(217 95 43 / 45%), rgb(23 107 135 / 40%));
+  border-left: 1px solid #d95f2b;
+  border-right: 1px solid #176b87;
+  cursor: grab;
+}
+
+.audio-segment-active.dragging {
+  cursor: grabbing;
+}
+
+.audio-cursor {
+  position: absolute;
+  top: 6px;
+  bottom: 14px;
+  width: 2px;
+  background: #1f1f1f;
+  transform: translateX(-1px);
+}
+
+.audio-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  transform: translateX(-7px);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.audio-handle::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 5px;
+  width: 4px;
+  border-radius: 99px;
+  background: #244c60;
+}
+
+.video-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+}
+
+.video-save-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 0.7rem;
+  align-items: end;
+  margin-top: 0.7rem;
+}
+
+.video-save-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.video-save-row button {
+  border: 1px solid var(--accent);
+  background: #ffe9dd;
+  color: #6c2b0f;
+  border-radius: 10px;
+  padding: 0.45rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  height: fit-content;
+}
+
+.grabber-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+}
+
+.grabber-actions button,
+.grabber-download {
+  border: 1px solid var(--accent-2);
+  background: #eef7fb;
+  color: #123e50;
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.grabber-source {
+  position: relative;
+  width: 100%;
+  max-width: 820px;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #c8d6de;
+  background: #111;
+}
+
+.grabber-source.edit {
+  cursor: crosshair;
+}
+
+.grabber-source video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.grabber-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ccdbe4;
+  font-weight: 700;
+}
+
+.grabber-rect {
+  position: absolute;
+  border: 2px solid #d95f2b;
+  box-shadow: inset 0 0 0 1px #fff;
+  background: rgb(217 95 43 / 12%);
+  pointer-events: none;
+}
+
+.grabber-hidden-canvas {
+  display: none;
+}
+
+.grabber-preview {
+  margin-top: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffefc;
+  padding: 0.8rem;
+}
+
+.grabber-preview h3 {
+  margin: 0 0 0.5rem;
+}
+
+.grabber-preview video {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 10px;
+  border: 1px solid #c8d6de;
+  background: #000;
+}
+
+.grabber-download.disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
 .detail article {
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -236,5 +473,9 @@ input[type='range'] {
   .figure-card {
     width: 100%;
     max-width: 360px;
+  }
+
+  .video-save-row {
+    grid-template-columns: 1fr;
   }
 }
