@@ -41,9 +41,9 @@ export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipN
     return {
       ...cfg,
       textures: {
-        baseColor: '/assets3d/claudia/tex/rp_claudia_rigged_002_dif.jpg',
-        normal: '/assets3d/claudia/tex/rp_claudia_rigged_002_norm.jpg',
-        roughness: '/assets3d/claudia/tex/rp_claudia_rigged_002_gloss.jpg'
+        baseColor: '/assets3d/claudia/tex/rp_claudia_rigged_002_dif_opt.jpg',
+        normal: '/assets3d/claudia/tex/rp_claudia_rigged_002_norm_opt.jpg',
+        roughness: '/assets3d/claudia/tex/rp_claudia_rigged_002_gloss_opt.jpg'
       }
     }
   }, [cfg, isFemaleTheme])

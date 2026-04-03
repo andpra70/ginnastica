@@ -8,9 +8,9 @@
     "light": 1.1,
     "textures": {
       "baseColor": "/assets3d/textures/man_basecolor.jpg",
-      "normal": "/assets3d/textures/man_normal.png",
-      "roughness": "/assets3d/textures/man_roughness.png",
-      "height": "/assets3d/textures/man_height.png"
+      "normal": "/assets3d/textures/man_normal_opt.jpg",
+      "roughness": "/assets3d/textures/man_roughness_opt.jpg",
+      "height": "/assets3d/textures/man_height_opt.jpg"
     }
   }
 }
