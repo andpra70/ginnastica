@@ -1,6 +1,6 @@
 {
-  "modelAsset": "/ginnastica/assets3d/Man.fbx",
-  "animationsRoot": "/ginnastica/assets/animations",
+  "modelAsset": "/assets3d/Man.fbx",
+  "animationsRoot": "/assets/animations",
   "default": {
     "clip": "Idle",
     "playbackRate": 1,
@@ -10,10 +10,10 @@
     "light": 1.1,
     "environment": "studio",
     "textures": {
-      "baseColor": "/ginnastica/assets3d/textures/man_basecolor.jpg",
-      "normal": "/ginnastica/assets3d/textures/man_normal.png",
-      "roughness": "/ginnastica/assets3d/textures/man_roughness.png",
-      "height": "/ginnastica/assets3d/textures/man_height.png"
+      "baseColor": "/assets3d/textures/man_basecolor.jpg",
+      "normal": "/assets3d/textures/man_normal.png",
+      "roughness": "/assets3d/textures/man_roughness.png",
+      "height": "/assets3d/textures/man_height.png"
     }
   },
   "pushup": {

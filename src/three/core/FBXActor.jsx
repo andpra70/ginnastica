@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react'
-import { Color, RepeatWrapping, SRGBColorSpace, TextureLoader } from 'three'
+import { Box3, Color, RepeatWrapping, SRGBColorSpace, TextureLoader, Vector3 } from 'three'
 import { useAnimations, useFBX } from '@react-three/drei'
 import useClipPlayback from './useClipPlayback'
+import resolveAssetPath from './resolveAssetPath'
 
 function applyPbrTextures(model, maps) {
   model.traverse((node) => {
@@ -33,11 +34,37 @@ function configureMap(texture, isColor = false) {
   if (isColor) texture.colorSpace = SRGBColorSpace
 }
 
+function normalizeModelPose(model) {
+  const box = new Box3().setFromObject(model)
+  if (box.isEmpty()) return
+
+  const size = new Vector3()
+  const center = new Vector3()
+  box.getSize(size)
+
+  // Some FBX assets are authored as Z-up: rotate once so camera and controls use Y-up.
+  if (size.z > size.y * 1.15) {
+    model.rotation.x = -Math.PI / 2
+    model.updateMatrixWorld(true)
+    box.setFromObject(model)
+  }
+
+  box.getCenter(center)
+  model.position.x -= center.x
+  model.position.z -= center.z
+  model.position.y -= box.min.y
+}
+
 export default function FBXActor({ modelPath, clips = [], config }) {
-  const model = useFBX(modelPath)
+  const resolvedModelPath = useMemo(() => resolveAssetPath(modelPath), [modelPath])
+  const model = useFBX(resolvedModelPath)
 
   const clipAssetPath = config?.asset
-  const clipAsset = useFBX(clipAssetPath || modelPath)
+  const resolvedClipAssetPath = useMemo(
+    () => resolveAssetPath(clipAssetPath || modelPath),
+    [clipAssetPath, modelPath]
+  )
+  const clipAsset = useFBX(resolvedClipAssetPath)
 
   const texturePaths = config?.textures || {}
   const textureList = [
@@ -48,7 +75,7 @@ export default function FBXActor({ modelPath, clips = [], config }) {
   ]
 
   const [baseColor, normal, roughness, height] = useMemo(
-    () => textureList,
+    () => textureList.map((path) => resolveAssetPath(path)),
     [texturePaths.baseColor, texturePaths.normal, texturePaths.roughness, texturePaths.height]
   )
 
@@ -81,6 +108,7 @@ export default function FBXActor({ modelPath, clips = [], config }) {
   useClipPlayback({ actions, clips, config })
 
   useEffect(() => {
+    normalizeModelPose(model)
     applyPbrTextures(model, maps)
   }, [model, maps])
 
@@ -92,4 +120,4 @@ export default function FBXActor({ modelPath, clips = [], config }) {
   return <primitive object={model} />
 }
 
-useFBX.preload('/ginnastica/assets3d/Man2.fbx')
+useFBX.preload(resolveAssetPath('/assets3d/Man2.fbx'))

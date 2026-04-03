@@ -2,10 +2,10 @@
 
 The app currently loads the FBX model and textures from:
 
-- `/ginnastica/assets3d/Man.fbx`
-- `/ginnastica/assets3d/textures/man_basecolor.jpg`
-- `/ginnastica/assets3d/textures/man_normal.png`
-- `/ginnastica/assets3d/textures/man_roughness.png`
-- `/ginnastica/assets3d/textures/man_height.png`
+- `/assets3d/Man.fbx`
+- `/assets3d/textures/man_basecolor.jpg`
+- `/assets3d/textures/man_normal.png`
+- `/assets3d/textures/man_roughness.png`
+- `/assets3d/textures/man_height.png`
 
 If you convert to GLB later, update `src/config/exerciseAnimations.json` (`modelAsset`).

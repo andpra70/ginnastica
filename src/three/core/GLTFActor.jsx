@@ -1,12 +1,18 @@
 import { useEffect, useMemo } from 'react'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import useClipPlayback from './useClipPlayback'
+import resolveAssetPath from './resolveAssetPath'
 
 export default function GLTFActor({ modelPath, clips = [], config }) {
-  const { scene, animations } = useGLTF(modelPath)
+  const resolvedModelPath = useMemo(() => resolveAssetPath(modelPath), [modelPath])
+  const { scene, animations } = useGLTF(resolvedModelPath)
 
   const clipAssetPath = config?.asset
-  const clipAsset = useGLTF(clipAssetPath || modelPath)
+  const resolvedClipAssetPath = useMemo(
+    () => resolveAssetPath(clipAssetPath || modelPath),
+    [clipAssetPath, modelPath]
+  )
+  const clipAsset = useGLTF(resolvedClipAssetPath)
 
   const mergedAnimations = useMemo(() => {
     const local = animations || []
