@@ -123,6 +123,7 @@ label {
 select,
 input[type='range'] {
   width: 100%;
+  font-family: inherit;
 }
 
 .warmup-grid,
@@ -540,6 +541,7 @@ input[type='range'] {
   align-items: center;
   gap: 0.7rem;
   justify-content: space-between;
+  flex-wrap: nowrap;
 }
 
 .brand-logo {
@@ -561,7 +563,32 @@ input[type='range'] {
 
 .burger-wrap {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.header-right {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.header-level {
+  display: grid;
+  gap: 0.06rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.header-level select {
+  border: 1px solid #9db4cb;
+  background: #ffffff;
+  padding: 0.08rem 0.2rem;
+  font-size: 0.74rem;
+  min-width: 96px;
+  font-family: inherit;
 }
 
 .burger-btn {
@@ -602,6 +629,23 @@ input[type='range'] {
 .burger-menu button.active {
   background: #edf7fb;
   color: #103d57;
+}
+
+.burger-level {
+  display: grid;
+  gap: 0.18rem;
+  border-top: 1px solid #e5edf5;
+  padding: 0.4rem 0.55rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.burger-level select {
+  border: 1px solid #9db4cb;
+  background: #ffffff;
+  padding: 0.14rem 0.2rem;
+  font-size: 0.78rem;
+  font-family: inherit;
 }
 
 .compact-nav {
@@ -786,6 +830,117 @@ input[type='range'] {
 .timer-strip {
   border: 0;
   padding: 0.25rem 0.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.timer-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.timer-actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.timer-actions button {
+  border: 1px solid #8eb6dc;
+  background: #f5faff;
+  color: #123b5a;
+  border-radius: 0;
+  padding: 0.28rem 0.45rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nav-play-controls {
+  display: flex;
+  gap: 0.18rem;
+}
+
+.icon-btn {
+  border: 1px solid #8eb6dc;
+  background: #f5faff;
+  color: #123b5a;
+  border-radius: 0;
+  padding: 0.12rem 0.3rem;
+  min-width: 26px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.card-nav {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.35rem;
+  align-items: center;
+  border: 1px solid #d7e3ee !important;
+  background: #f8fcff !important;
+  padding: 0.25rem !important;
+}
+
+.card-nav button {
+  border: 1px solid #9eb9d4;
+  background: #fff;
+  border-radius: 0;
+  padding: 0.22rem 0.35rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.card-nav select {
+  width: 100%;
+  border: 1px solid #9eb9d4;
+  background: #fff;
+  padding: 0.2rem;
+  font-family: inherit;
+}
+
+.editor-panel {
+  border: 1px solid #d2e2f2 !important;
+  background: #f8fcff !important;
+  padding: 0.35rem !important;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.35rem;
+}
+
+.editor-grid label {
+  display: grid;
+  gap: 0.18rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.editor-grid input,
+.editor-grid select {
+  border: 1px solid #9eb9d4;
+  background: #fff;
+  padding: 0.18rem 0.22rem;
+  font-family: inherit;
+}
+
+.editor-actions {
+  margin-top: 0.35rem;
+}
+
+.editor-actions button {
+  border: 1px solid #4e84b3;
+  background: #edf7ff;
+  color: #154468;
+  border-radius: 0;
+  padding: 0.25rem 0.45rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .light-controls {
@@ -894,5 +1049,27 @@ input[type='range'] {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.2rem;
+  }
+
+  .header-level {
+    width: auto;
+  }
+
+  .timer-strip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .brand-logo-img {
+    width: 78px;
+  }
+
+  .brand-row h1 {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .card-nav {
+    grid-template-columns: auto 1fr auto;
   }
 }
