@@ -38,6 +38,13 @@ function getSplashModeFromUrl() {
   return null
 }
 
+function isMobileLikeDevice() {
+  if (typeof window === 'undefined') return false
+  const byTouch = navigator.maxTouchPoints > 0
+  const byWidth = window.matchMedia?.('(max-width: 900px)')?.matches
+  return Boolean(byTouch && byWidth)
+}
+
 function scaleReps(reps, factor) {
   if (typeof reps !== 'string') return reps
   return reps.replace(/\d+(\.\d+)?/g, (match) => {
@@ -345,6 +352,7 @@ export default function App() {
   const splashEnabled = splashUrlMode ?? (appConfig?.ui?.splashEnabled !== false)
   const splashDurationMs = Math.min(3000, Math.max(0, Number(appConfig?.ui?.splashDurationMs ?? 2000)))
   const [showSplash, setShowSplash] = useState(() => splashEnabled)
+  const [mobileFullscreenAttempted, setMobileFullscreenAttempted] = useState(false)
 
   const [programCardsBase, setProgramCardsBase] = useState([])
   const latestVideoByCardRef = useRef({})
@@ -384,6 +392,29 @@ export default function App() {
     const timeoutId = window.setTimeout(() => setShowSplash(false), splashDurationMs)
     return () => window.clearTimeout(timeoutId)
   }, [showSplash, splashDurationMs])
+
+  useEffect(() => {
+    if (mobileFullscreenAttempted) return undefined
+    if (!isMobileLikeDevice()) return undefined
+
+    const target = document.documentElement
+    const requestFullscreen =
+      target.requestFullscreen
+      || target.webkitRequestFullscreen
+      || target.msRequestFullscreen
+    if (typeof requestFullscreen !== 'function') return undefined
+
+    const tryEnterFullscreen = () => {
+      if (document.fullscreenElement) return
+      Promise.resolve(requestFullscreen.call(target)).catch(() => {})
+      setMobileFullscreenAttempted(true)
+    }
+
+    window.addEventListener('pointerdown', tryEnterFullscreen, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', tryEnterFullscreen)
+    }
+  }, [mobileFullscreenAttempted])
 
   const programCards = useMemo(() => {
     const setMultiplier = levelCfg?.setMultiplier || 1
