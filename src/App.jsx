@@ -506,7 +506,9 @@ export default function App() {
       ) : null}
       <header className="hero compact-hero">
         <div className="brand-row">
-          <img src={logoSrc} alt="Sport" className="brand-logo-img" />
+          <div className="brand-logo-shell">
+            <img src={logoSrc} alt="Sport" className="brand-logo-img" />
+          </div>
           <h1>Trainer</h1>
           <div className="burger-wrap">
             <button type="button" className="burger-btn" aria-label="Apri menu sezioni" onClick={() => setMenuOpen((v) => !v)}>☰</button>
