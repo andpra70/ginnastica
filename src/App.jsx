@@ -68,6 +68,24 @@ function toExportProgram(cards, levels) {
   }
 }
 
+function getSavedVideoSegment(cardId, fallbackVideo) {
+  if (typeof window === 'undefined') return fallbackVideo
+  try {
+    const raw = window.localStorage.getItem(`ginnastica.videoLoop.${cardId}`)
+    if (!raw) return fallbackVideo
+    const parsed = JSON.parse(raw)
+    const start = Number.isFinite(Number(parsed.start)) ? Number(parsed.start) : fallbackVideo?.start
+    const end = Number.isFinite(Number(parsed.end)) ? Number(parsed.end) : fallbackVideo?.end
+    return {
+      url: typeof parsed.videoUrl === 'string' && parsed.videoUrl ? parsed.videoUrl : fallbackVideo?.url || '',
+      start: Number.isFinite(start) ? start : 0,
+      end: Number.isFinite(end) ? end : Math.max(1, (Number.isFinite(start) ? start : 0) + 20)
+    }
+  } catch {
+    return fallbackVideo
+  }
+}
+
 function CardViewer({ card }) {
   if (card.viewerType === 'video') {
     const id = parseYouTubeVideoId(card.video?.url)
@@ -79,6 +97,8 @@ function CardViewer({ card }) {
       end: String(Math.floor(end)),
       rel: '0',
       playsinline: '1',
+      autoplay: '1',
+      mute: '1',
       loop: '1',
       playlist: id
     })
@@ -145,13 +165,25 @@ export default function App() {
   const logoSrc = `${import.meta.env.BASE_URL}decathlon.svg`
 
   const allCfg = appConfig?.allenamento || {}
+  const defaultVideoUrl = appConfig.videoSources?.[0] || ''
   const levels = allCfg.livelli || {}
   const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
 
   const [programCardsBase, setProgramCardsBase] = useState(() => {
-    const warmup = (allCfg.warmup || []).map((c) => normalizeCard(c, 'warmup'))
-    const esercizi = (allCfg.esercizi || []).map((c) => normalizeCard(c, 'esercizio'))
-    const stretching = (allCfg.stretching || []).map((c) => normalizeCard(c, 'stretching'))
+    const withDefaultVideo = (c, cls) => {
+      const base = normalizeCard(c, cls)
+      return {
+        ...base,
+        video: {
+          url: base.video?.url || defaultVideoUrl,
+          start: Number(base.video?.start ?? 0),
+          end: Number(base.video?.end ?? 20)
+        }
+      }
+    }
+    const warmup = (allCfg.warmup || []).map((c) => withDefaultVideo(c, 'warmup'))
+    const esercizi = (allCfg.esercizi || []).map((c) => withDefaultVideo(c, 'esercizio'))
+    const stretching = (allCfg.stretching || []).map((c) => withDefaultVideo(c, 'stretching'))
     return orderByClass([...warmup, ...esercizi, ...stretching])
   })
 
@@ -161,12 +193,17 @@ export default function App() {
     return orderByClass(
       programCardsBase.map((card) => ({
         ...card,
+        video: getSavedVideoSegment(card.id, {
+          url: card.video?.url || defaultVideoUrl,
+          start: Number(card.video?.start ?? 0),
+          end: Number(card.video?.end ?? 20)
+        }),
         setsScaled: Math.max(1, Math.round((card.sets || 1) * setMultiplier)),
         durationScaledSec: Math.max(20, Math.round((card.durationSec || 60) * durationMultiplier)),
         repsScaled: scaleReps(card.reps || '', durationMultiplier)
       }))
     )
-  }, [programCardsBase, levelCfg])
+  }, [programCardsBase, levelCfg, defaultVideoUrl])
 
   const [selectedCardId, setSelectedCardId] = useState(programCards[0]?.id || '')
 
@@ -369,9 +406,18 @@ export default function App() {
                 <label>Durata (sec)<input type="number" value={selectedCard.durationSec} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, durationSec: Number(e.target.value) || 0 } : c))} /></label>
                 <label>Serie<input type="number" value={selectedCard.sets} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, sets: Number(e.target.value) || 1 } : c))} /></label>
                 <label>Reps<input value={selectedCard.reps} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, reps: e.target.value } : c))} /></label>
-                <label>Video URL<input value={selectedCard.video?.url || ''} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, video: { ...(c.video || {}), url: e.target.value } } : c))} /></label>
-                <label>Video Start<input type="number" value={selectedCard.video?.start || 0} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, video: { ...(c.video || {}), start: Number(e.target.value) || 0 } } : c))} /></label>
-                <label>Video End<input type="number" value={selectedCard.video?.end || 20} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, video: { ...(c.video || {}), end: Number(e.target.value) || 0 } } : c))} /></label>
+                <label>Video URL
+                  <select
+                    value={selectedCard.video?.url || appConfig.videoSources?.[0] || ''}
+                    onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, video: { ...(c.video || {}), url: e.target.value } } : c))}
+                  >
+                    {(appConfig.videoSources || []).map((url) => (
+                      <option key={url} value={url}>{url}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>Video Start (da Video Editor)<input type="number" value={selectedCard.video?.start || 0} readOnly /></label>
+                <label>Video End (da Video Editor)<input type="number" value={selectedCard.video?.end || 20} readOnly /></label>
               </div>
               <div className="editor-actions">
                 <button type="button" onClick={saveProgramJson}>Salva JSON Programma</button>
