@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
 import RegionVideoGrabber from './components/RegionVideoGrabber'
@@ -22,6 +22,25 @@ function parseYouTubeVideoId(url = '') {
   }
 }
 
+const YT_API_SRC = 'https://www.youtube.com/iframe_api'
+
+function ensureYouTubeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT)
+  return new Promise((resolve) => {
+    const prev = window.onYouTubeIframeAPIReady
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof prev === 'function') prev()
+      resolve(window.YT)
+    }
+    const existing = document.querySelector(`script[src="${YT_API_SRC}"]`)
+    if (existing) return
+    const script = document.createElement('script')
+    script.src = YT_API_SRC
+    script.async = true
+    document.head.appendChild(script)
+  })
+}
+
 function getEditMode() {
   if (typeof window === 'undefined') return false
   return new URLSearchParams(window.location.search).get('edit') === '1'
@@ -40,8 +59,7 @@ function normalizeCard(card, classKey) {
   return {
     ...card,
     classKey,
-    viewerType: card.viewerType || '3d',
-    video: card.video || { url: '', start: 0, end: 20 }
+    viewerType: card.viewerType || '3d'
   }
 }
 
@@ -55,47 +73,32 @@ function sanitizeCard(card) {
   delete base.setsScaled
   delete base.durationScaledSec
   delete base.repsScaled
-  if (!base.video?.url) delete base.video
+  delete base.video
+  delete base.videoSegment
   return base
 }
 
-function cardsFromAllenamento(allenamento, defaultVideoUrl) {
+function cardsFromAllenamento(allenamento) {
   const fromCards = Array.isArray(allenamento?.cards) ? allenamento.cards : null
   if (fromCards?.length) {
     return orderByClass(
-      fromCards.map((card) => normalizeCard({
-        ...card,
-        video: {
-          url: card?.video?.url || defaultVideoUrl,
-          start: Number(card?.video?.start ?? 0),
-          end: Number(card?.video?.end ?? 20)
-        }
-      }, card.classKey || 'esercizio'))
+      fromCards.map((card) => normalizeCard({ ...card }, card.classKey || 'esercizio'))
     )
   }
 
-  const warmup = (allenamento?.warmup || []).map((c) => normalizeCard({
-    ...c,
-    video: { url: c?.video?.url || defaultVideoUrl, start: Number(c?.video?.start ?? 0), end: Number(c?.video?.end ?? 20) }
-  }, 'warmup'))
-  const esercizi = (allenamento?.esercizi || []).map((c) => normalizeCard({
-    ...c,
-    video: { url: c?.video?.url || defaultVideoUrl, start: Number(c?.video?.start ?? 0), end: Number(c?.video?.end ?? 20) }
-  }, 'esercizio'))
-  const stretching = (allenamento?.stretching || []).map((c) => normalizeCard({
-    ...c,
-    video: { url: c?.video?.url || defaultVideoUrl, start: Number(c?.video?.start ?? 0), end: Number(c?.video?.end ?? 20) }
-  }, 'stretching'))
+  const warmup = (allenamento?.warmup || []).map((c) => normalizeCard({ ...c }, 'warmup'))
+  const esercizi = (allenamento?.esercizi || []).map((c) => normalizeCard({ ...c }, 'esercizio'))
+  const stretching = (allenamento?.stretching || []).map((c) => normalizeCard({ ...c }, 'stretching'))
   return orderByClass([...warmup, ...esercizi, ...stretching])
 }
 
-function readSavedProgramCards(defaultVideoUrl) {
+function readSavedProgramCards() {
   if (typeof window === 'undefined') return null
   try {
     const raw = window.localStorage.getItem('ginnastica.program.json')
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    return cardsFromAllenamento(parsed?.allenamento, defaultVideoUrl)
+    return cardsFromAllenamento(parsed?.allenamento)
   } catch {
     return null
   }
@@ -127,60 +130,118 @@ function readStoredVideoSegments() {
   }
 }
 
-function getSavedVideoSegment(cardId, fallbackVideo, storedSegments = {}) {
+function getSavedVideoSegment(cardId, defaultVideoUrl, storedSegments = {}) {
   const fromProgram = storedSegments?.[cardId]
   if (fromProgram && typeof fromProgram === 'object') {
-    const start = Number.isFinite(Number(fromProgram.start)) ? Number(fromProgram.start) : fallbackVideo?.start
-    const end = Number.isFinite(Number(fromProgram.end)) ? Number(fromProgram.end) : fallbackVideo?.end
+    const start = Number.isFinite(Number(fromProgram.start)) ? Number(fromProgram.start) : 0
+    const end = Number.isFinite(Number(fromProgram.end)) ? Number(fromProgram.end) : start + 20
     return {
-      url: typeof fromProgram.videoUrl === 'string' && fromProgram.videoUrl ? fromProgram.videoUrl : fallbackVideo?.url || '',
+      url: typeof fromProgram.videoUrl === 'string' && fromProgram.videoUrl ? fromProgram.videoUrl : defaultVideoUrl || '',
       start: Number.isFinite(start) ? start : 0,
       end: Number.isFinite(end) ? end : Math.max(1, (Number.isFinite(start) ? start : 0) + 20)
     }
   }
 
-  if (typeof window === 'undefined') return fallbackVideo
+  if (typeof window === 'undefined') return { url: defaultVideoUrl, start: 0, end: 20 }
   try {
     const raw = window.localStorage.getItem(`ginnastica.videoLoop.${cardId}`)
-    if (!raw) return fallbackVideo
+    if (!raw) return { url: defaultVideoUrl, start: 0, end: 20 }
     const parsed = JSON.parse(raw)
-    const start = Number.isFinite(Number(parsed.start)) ? Number(parsed.start) : fallbackVideo?.start
-    const end = Number.isFinite(Number(parsed.end)) ? Number(parsed.end) : fallbackVideo?.end
+    const start = Number.isFinite(Number(parsed.start)) ? Number(parsed.start) : 0
+    const end = Number.isFinite(Number(parsed.end)) ? Number(parsed.end) : start + 20
     return {
-      url: typeof parsed.videoUrl === 'string' && parsed.videoUrl ? parsed.videoUrl : fallbackVideo?.url || '',
+      url: typeof parsed.videoUrl === 'string' && parsed.videoUrl ? parsed.videoUrl : defaultVideoUrl || '',
       start: Number.isFinite(start) ? start : 0,
       end: Number.isFinite(end) ? end : Math.max(1, (Number.isFinite(start) ? start : 0) + 20)
     }
   } catch {
-    return fallbackVideo
+    return { url: defaultVideoUrl, start: 0, end: 20 }
   }
+}
+
+function SegmentVideoViewer({ cardId, videoSegment }) {
+  const hostRef = useRef(null)
+  const playerRef = useRef(null)
+  const loopRef = useRef(null)
+  const [playerReady, setPlayerReady] = useState(false)
+  const videoId = parseYouTubeVideoId(videoSegment?.url || '')
+  const start = Math.max(0, Number(videoSegment?.start || 0))
+  const end = Math.max(start + 1, Number(videoSegment?.end || start + 20))
+
+  useEffect(() => {
+    if (!videoId || !hostRef.current) return undefined
+    let cancelled = false
+    setPlayerReady(false)
+
+    ensureYouTubeApi().then((YT) => {
+      if (cancelled || !hostRef.current) return
+      if (playerRef.current?.destroy) playerRef.current.destroy()
+
+      playerRef.current = new YT.Player(hostRef.current, {
+        videoId,
+        playerVars: {
+          controls: 0,
+          rel: 0,
+          playsinline: 1,
+          autoplay: 1,
+          mute: 1
+        },
+        events: {
+          onReady: () => {
+            const p = playerRef.current
+            if (!p?.seekTo) return
+            p.seekTo(start, true)
+            p.playVideo()
+            setPlayerReady(true)
+          }
+        }
+      })
+    })
+
+    return () => {
+      cancelled = true
+      if (loopRef.current) {
+        window.clearInterval(loopRef.current)
+        loopRef.current = null
+      }
+      if (playerRef.current?.destroy) playerRef.current.destroy()
+      playerRef.current = null
+    }
+  }, [videoId, start])
+
+  useEffect(() => {
+    if (!playerReady || !playerRef.current?.getCurrentTime) return undefined
+    if (loopRef.current) {
+      window.clearInterval(loopRef.current)
+      loopRef.current = null
+    }
+    loopRef.current = window.setInterval(() => {
+      const p = playerRef.current
+      if (!p?.getCurrentTime || !p?.seekTo) return
+      const now = p.getCurrentTime()
+      if (now >= end) {
+        p.seekTo(start, true)
+        p.playVideo?.()
+      }
+    }, 200)
+
+    return () => {
+      if (loopRef.current) {
+        window.clearInterval(loopRef.current)
+        loopRef.current = null
+      }
+    }
+  }, [start, end, cardId, videoId, playerReady])
+
+  if (!videoId) return <div className="figure-card">Video non configurato</div>
+  return <div ref={hostRef} style={{ width: '100%', height: '100%' }} />
 }
 
 function CardViewer({ card }) {
   if (card.viewerType === 'video') {
-    const id = parseYouTubeVideoId(card.video?.url)
-    if (!id) return <div className="figure-card">Video non configurato</div>
-    const start = Math.max(0, Number(card.video?.start || 0))
-    const end = Math.max(start + 1, Number(card.video?.end || start + 20))
-    const params = new URLSearchParams({
-      start: String(Math.floor(start)),
-      end: String(Math.floor(end)),
-      rel: '0',
-      playsinline: '1',
-      autoplay: '1',
-      mute: '1',
-      loop: '1',
-      playlist: id
-    })
     return (
       <div className="figure-card figure-card-3d">
-        <iframe
-          title={`video-${card.id}`}
-          src={`https://www.youtube.com/embed/${id}?${params.toString()}`}
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen
-          style={{ width: '100%', height: '100%', border: 0 }}
-        />
+        <SegmentVideoViewer cardId={card.id} videoSegment={card.videoSegment} />
       </div>
     )
   }
@@ -198,7 +259,6 @@ function ProgramCard({ card }) {
             <p className="timer-chip">Timer scheda: {formatTime(card.durationScaledSec)}</p>
           </div>
           <p className="hint">{card.type} • {card.setsScaled} serie • {card.repsScaled || card.reps}</p>
-          <p className="hint">Viewer: {card.viewerType} • animationType: {card.animationType}</p>
         </div>
         <CardViewer card={card} />
       </div>
@@ -244,7 +304,7 @@ export default function App() {
       const raw = window.localStorage.getItem('ginnastica.program.json')
       if (!raw) return
       const parsed = JSON.parse(raw)
-      const cards = cardsFromAllenamento(parsed?.allenamento, defaultVideoUrl)
+      const cards = cardsFromAllenamento(parsed?.allenamento)
       if (cards?.length) setProgramCardsBase(cards)
       const segments = parsed?.videoSegments
       if (!segments || typeof segments !== 'object') return
@@ -253,14 +313,14 @@ export default function App() {
     } catch {
       // Ignore malformed stored json
     }
-  }, [defaultVideoUrl])
+  }, [])
   const levels = allCfg.livelli || {}
   const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
 
   const [programCardsBase, setProgramCardsBase] = useState(() => {
-    const saved = readSavedProgramCards(defaultVideoUrl)
+    const saved = readSavedProgramCards()
     if (saved?.length) return saved
-    return cardsFromAllenamento(allCfg, defaultVideoUrl)
+    return cardsFromAllenamento(allCfg)
   })
 
   const programCards = useMemo(() => {
@@ -269,11 +329,7 @@ export default function App() {
     return orderByClass(
       programCardsBase.map((card) => ({
         ...card,
-        video: getSavedVideoSegment(card.id, {
-          url: card.video?.url || defaultVideoUrl,
-          start: Number(card.video?.start ?? 0),
-          end: Number(card.video?.end ?? 20)
-        }, storedSegments),
+        videoSegment: getSavedVideoSegment(card.id, defaultVideoUrl, storedSegments),
         setsScaled: Math.max(1, Math.round((card.sets || 1) * setMultiplier)),
         durationScaledSec: Math.max(20, Math.round((card.durationSec || 60) * durationMultiplier)),
         repsScaled: scaleReps(card.reps || '', durationMultiplier)
@@ -351,7 +407,7 @@ export default function App() {
     const storageSegments = readStoredVideoSegments()
     const computedSegments = {}
     for (const card of programCards) {
-      const seg = card.video || {}
+      const seg = card.videoSegment || {}
       computedSegments[card.id] = {
         videoUrl: seg.url || '',
         start: Number(seg.start ?? 0),
@@ -379,7 +435,7 @@ export default function App() {
   const videoEditorCard = selectedCard
     ? {
       ...selectedCard,
-      video: selectedCard.video?.url ? selectedCard.video : { url: appConfig.videoSources?.[0] || '', start: 0, end: 20 }
+      video: selectedCard.videoSegment?.url ? selectedCard.videoSegment : { url: appConfig.videoSources?.[0] || '', start: 0, end: 20 }
     }
     : null
 
@@ -499,18 +555,9 @@ export default function App() {
                 <label>Durata (sec)<input type="number" value={selectedCard.durationSec} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, durationSec: Number(e.target.value) || 0 } : c))} /></label>
                 <label>Serie<input type="number" value={selectedCard.sets} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, sets: Number(e.target.value) || 1 } : c))} /></label>
                 <label>Reps<input value={selectedCard.reps} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, reps: e.target.value } : c))} /></label>
-                <label>Video URL
-                  <select
-                    value={selectedCard.video?.url || appConfig.videoSources?.[0] || ''}
-                    onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, video: { ...(c.video || {}), url: e.target.value } } : c))}
-                  >
-                    {(appConfig.videoSources || []).map((url) => (
-                      <option key={url} value={url}>{url}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>Video Start (da Video Editor)<input type="number" value={selectedCard.video?.start || 0} readOnly /></label>
-                <label>Video End (da Video Editor)<input type="number" value={selectedCard.video?.end || 20} readOnly /></label>
+                <label>Video URL (da segmento)<input value={selectedCard.videoSegment?.url || ''} readOnly /></label>
+                <label>Video Start (da Video Editor)<input type="number" value={selectedCard.videoSegment?.start || 0} readOnly /></label>
+                <label>Video End (da Video Editor)<input type="number" value={selectedCard.videoSegment?.end || 20} readOnly /></label>
               </div>
               <div className="editor-actions">
                 <button type="button" onClick={saveProgramJson}>Salva JSON Programma</button>

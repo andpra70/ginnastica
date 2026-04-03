@@ -779,15 +779,32 @@ input[type='range'] {
   align-items: flex-start;
 }
 
+.program-card .detail-head > div > .hint:first-child {
+  margin: 0 0 0.08rem;
+  line-height: 1.05;
+}
+
+.program-card .detail-head > div > .hint {
+  margin: 0.12rem 0 0;
+}
+
 .title-inline {
   display: flex;
   align-items: baseline;
   gap: 0.45rem;
   flex-wrap: wrap;
+  margin-top: -0.05rem;
+}
+
+.title-inline h3 {
+  margin: 0;
 }
 
 .title-inline .timer-chip {
   margin: 0;
+  margin-left: auto;
+  padding: 0.08rem 0.3rem;
+  font-size: 0.78rem;
 }
 
 .level-play-row {
@@ -814,13 +831,33 @@ input[type='range'] {
 
 .vertical-sections {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.22rem;
 }
 
 .vertical-sections article {
   border: 1px solid #d7e2ee;
   background: #fbfdff;
-  padding: 0.35rem;
+  padding: 0.2rem 0.24rem;
+}
+
+.vertical-sections article h4 {
+  margin: 0 0 0.08rem;
+  line-height: 1.05;
+}
+
+.vertical-sections article ul {
+  margin: 0;
+  padding-left: 0.95rem;
+}
+
+.vertical-sections article li {
+  margin: 0;
+  line-height: 1.08;
+}
+
+.vertical-sections article p {
+  margin: 0;
+  line-height: 1.08;
 }
 
 .detail-grid {
@@ -1046,9 +1083,34 @@ input[type='range'] {
   }
 
   .title-inline {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: 0.2rem;
+    gap: 0.22rem;
+    width: 100%;
+    margin-top: -0.12rem;
+  }
+
+  .program-card .detail-head > div > .hint:first-child {
+    margin: 0 0 0.02rem;
+    font-size: 0.82rem;
+  }
+
+  .program-card .detail-head > div > .hint {
+    margin: 0.08rem 0 0;
+    font-size: 0.84rem;
+  }
+
+  .title-inline h3 {
+    font-size: 1rem;
+    line-height: 1.05;
+  }
+
+  .title-inline .timer-chip {
+    margin-left: auto;
+    margin-top: 0;
+    padding: 0.05rem 0.24rem;
+    font-size: 0.72rem;
+    line-height: 1;
   }
 
   .header-level {
@@ -1071,5 +1133,28 @@ input[type='range'] {
 
   .card-nav {
     grid-template-columns: auto 1fr auto;
+  }
+
+  .vertical-sections {
+    gap: 0.14rem;
+  }
+
+  .vertical-sections article {
+    padding: 0.14rem 0.16rem;
+  }
+
+  .vertical-sections article h4 {
+    margin: 0 0 0.05rem;
+    font-size: 0.92rem;
+  }
+
+  .vertical-sections article ul {
+    padding-left: 0.82rem;
+  }
+
+  .vertical-sections article li,
+  .vertical-sections article p {
+    font-size: 0.84rem;
+    line-height: 1.04;
   }
 }
