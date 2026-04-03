@@ -50,20 +50,67 @@ function orderByClass(cards) {
   return [...cards].sort((a, b) => (rank[a.classKey] || 99) - (rank[b.classKey] || 99))
 }
 
-function toExportProgram(cards, levels) {
-  const clean = (card) => {
-    const base = { ...card }
-    delete base.classKey
-    if (!base.video?.url) delete base.video
-    return base
+function sanitizeCard(card) {
+  const base = { ...card }
+  delete base.setsScaled
+  delete base.durationScaledSec
+  delete base.repsScaled
+  if (!base.video?.url) delete base.video
+  return base
+}
+
+function cardsFromAllenamento(allenamento, defaultVideoUrl) {
+  const fromCards = Array.isArray(allenamento?.cards) ? allenamento.cards : null
+  if (fromCards?.length) {
+    return orderByClass(
+      fromCards.map((card) => normalizeCard({
+        ...card,
+        video: {
+          url: card?.video?.url || defaultVideoUrl,
+          start: Number(card?.video?.start ?? 0),
+          end: Number(card?.video?.end ?? 20)
+        }
+      }, card.classKey || 'esercizio'))
+    )
   }
+
+  const warmup = (allenamento?.warmup || []).map((c) => normalizeCard({
+    ...c,
+    video: { url: c?.video?.url || defaultVideoUrl, start: Number(c?.video?.start ?? 0), end: Number(c?.video?.end ?? 20) }
+  }, 'warmup'))
+  const esercizi = (allenamento?.esercizi || []).map((c) => normalizeCard({
+    ...c,
+    video: { url: c?.video?.url || defaultVideoUrl, start: Number(c?.video?.start ?? 0), end: Number(c?.video?.end ?? 20) }
+  }, 'esercizio'))
+  const stretching = (allenamento?.stretching || []).map((c) => normalizeCard({
+    ...c,
+    video: { url: c?.video?.url || defaultVideoUrl, start: Number(c?.video?.start ?? 0), end: Number(c?.video?.end ?? 20) }
+  }, 'stretching'))
+  return orderByClass([...warmup, ...esercizi, ...stretching])
+}
+
+function readSavedProgramCards(defaultVideoUrl) {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem('ginnastica.program.json')
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return cardsFromAllenamento(parsed?.allenamento, defaultVideoUrl)
+  } catch {
+    return null
+  }
+}
+
+function toExportProgram(cards, levels) {
+  const normalizedCards = orderByClass(cards.map(sanitizeCard))
   return {
     videoSources: appConfig.videoSources || [],
     allenamento: {
       livelli: levels,
-      warmup: cards.filter((c) => c.classKey === 'warmup').map(clean),
-      esercizi: cards.filter((c) => c.classKey === 'esercizio').map(clean),
-      stretching: cards.filter((c) => c.classKey === 'stretching').map(clean)
+      cards: normalizedCards,
+      warmup: normalizedCards.filter((c) => c.classKey === 'warmup').map(sanitizeCard),
+      esercizi: normalizedCards.filter((c) => c.classKey === 'esercizio').map(sanitizeCard),
+      stretching: normalizedCards.filter((c) => c.classKey === 'stretching').map(sanitizeCard)
     }
   }
 }
@@ -197,6 +244,8 @@ export default function App() {
       const raw = window.localStorage.getItem('ginnastica.program.json')
       if (!raw) return
       const parsed = JSON.parse(raw)
+      const cards = cardsFromAllenamento(parsed?.allenamento, defaultVideoUrl)
+      if (cards?.length) setProgramCardsBase(cards)
       const segments = parsed?.videoSegments
       if (!segments || typeof segments !== 'object') return
       window.localStorage.setItem('ginnastica.program.videoSegments', JSON.stringify(segments))
@@ -204,26 +253,14 @@ export default function App() {
     } catch {
       // Ignore malformed stored json
     }
-  }, [])
+  }, [defaultVideoUrl])
   const levels = allCfg.livelli || {}
   const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
 
   const [programCardsBase, setProgramCardsBase] = useState(() => {
-    const withDefaultVideo = (c, cls) => {
-      const base = normalizeCard(c, cls)
-      return {
-        ...base,
-        video: {
-          url: base.video?.url || defaultVideoUrl,
-          start: Number(base.video?.start ?? 0),
-          end: Number(base.video?.end ?? 20)
-        }
-      }
-    }
-    const warmup = (allCfg.warmup || []).map((c) => withDefaultVideo(c, 'warmup'))
-    const esercizi = (allCfg.esercizi || []).map((c) => withDefaultVideo(c, 'esercizio'))
-    const stretching = (allCfg.stretching || []).map((c) => withDefaultVideo(c, 'stretching'))
-    return orderByClass([...warmup, ...esercizi, ...stretching])
+    const saved = readSavedProgramCards(defaultVideoUrl)
+    if (saved?.length) return saved
+    return cardsFromAllenamento(allCfg, defaultVideoUrl)
   })
 
   const programCards = useMemo(() => {
