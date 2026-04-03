@@ -62,6 +62,15 @@ function isReadyPlayer(player) {
   )
 }
 
+function safeDestroyPlayer(player) {
+  if (!player) return
+  try {
+    if (typeof player.destroy === 'function') player.destroy()
+  } catch {
+    // Ignore third-party teardown errors from YT internals
+  }
+}
+
 export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegmentChange, editable = false }) {
   const playerHostRef = useRef(null)
   const timelineRef = useRef(null)
@@ -116,17 +125,29 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
     if (!videoId || !playerHostRef.current) return undefined
 
     let cancelled = false
+    const host = playerHostRef.current
     ensureYouTubeApi().then((YT) => {
-      if (cancelled) return
+      if (cancelled || !host || !host.isConnected) return
 
-      if (playerRef.current) {
-        if (typeof playerRef.current.destroy === 'function') {
-          playerRef.current.destroy()
+      const existing = playerRef.current
+      const existingIframe = existing?.getIframe?.()
+      if (existing && existingIframe?.parentElement === host) {
+        try {
+          existing.loadVideoById?.({ videoId, startSeconds: startSec })
+          existing.playVideo?.()
+          const duration = Number(existing.getDuration?.() || 0)
+          if (duration > 1) setDurationSec(duration)
+          return
+        } catch {
+          safeDestroyPlayer(existing)
+          playerRef.current = null
         }
+      } else if (existing) {
+        safeDestroyPlayer(existing)
         playerRef.current = null
       }
 
-      playerRef.current = new YT.Player(playerHostRef.current, {
+      playerRef.current = new YT.Player(host, {
         videoId,
         playerVars: {
           controls: 1,
@@ -149,14 +170,10 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
 
     return () => {
       cancelled = true
-      if (playerRef.current) {
-        if (typeof playerRef.current.destroy === 'function') {
-          playerRef.current.destroy()
-        }
-        playerRef.current = null
-      }
+      safeDestroyPlayer(playerRef.current)
+      playerRef.current = null
     }
-  }, [videoId])
+  }, [videoId, startSec])
 
   useEffect(() => {
     if (!isReadyPlayer(playerRef.current)) return undefined

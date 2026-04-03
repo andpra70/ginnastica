@@ -4,7 +4,7 @@
     "https://www.youtube.com/watch?v=xK5PMmRbs0k"
   ],
   "ui": {
-    "splashEnabled": true,
+    "splashEnabled": false,
     "splashDurationMs": 2000
   },
   "allenamento": {
