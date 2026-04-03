@@ -12,10 +12,8 @@ export default function resolveAssetPath(path) {
 
   const base = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/')
   const normalizedPath = path.replace(/^\/+/, '')
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  if (typeof window === 'undefined') return `${base}${normalizedPath}`
 
-  if (!origin) return `${base}${normalizedPath}`
-
-  const baseUrl = new URL(base, origin)
+  const baseUrl = new URL(base, window.location.href)
   return new URL(normalizedPath, baseUrl).toString()
 }
