@@ -1,6 +1,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Bounds, OrbitControls, useBounds } from '@react-three/drei'
+import { Vector3 } from 'three'
 import ModelActor from './ModelActor'
 import animationCfg from '../../config/exerciseAnimations.json'
 
@@ -45,6 +46,7 @@ export default function ExerciseStage({
   onModelAssetSelected
 }) {
   const cfg = animationCfg.default || {}
+  const viewerHostRef = useRef(null)
   const isFemaleTheme = theme === 'femmina'
   const normalizedModelOptions = useMemo(
     () => (Array.isArray(modelOptions) ? modelOptions.filter((value) => typeof value === 'string' && value.endsWith('.fbx')) : []),
@@ -180,9 +182,44 @@ export default function ExerciseStage({
     if (notifyParent) onCameraSavedRef.current?.(payload)
   }, [scopedStorageKey, cardId])
 
+  const handleWheelZoomInverted = useCallback((event) => {
+    const controls = controlsRef.current
+    if (!controls) return
+    const camera = controls.object
+    const target = controls.target
+    if (!camera || !target) return
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const delta = Number(event.deltaY || 0)
+    const intensity = Math.min(0.4, Math.abs(delta) * 0.0015)
+    if (!Number.isFinite(intensity) || intensity <= 0) return
+
+    // Inverted wheel: scroll up => zoom out, scroll down => zoom in.
+    const scaleFactor = delta < 0 ? (1 + intensity) : (1 - intensity)
+    const direction = new Vector3().subVectors(camera.position, target)
+    const currentDistance = Math.max(1e-6, direction.length())
+    const minDistance = Number.isFinite(controls.minDistance) ? controls.minDistance : 0.1
+    const maxDistance = Number.isFinite(controls.maxDistance) ? controls.maxDistance : 500
+    const nextDistance = Math.min(maxDistance, Math.max(minDistance, currentDistance * scaleFactor))
+
+    direction.setLength(nextDistance)
+    camera.position.copy(target).add(direction)
+    controls.update()
+  }, [])
+
+  useEffect(() => {
+    const host = viewerHostRef.current
+    if (!host) return undefined
+
+    host.addEventListener('wheel', handleWheelZoomInverted, { passive: false })
+    return () => host.removeEventListener('wheel', handleWheelZoomInverted)
+  }, [handleWheelZoomInverted])
+
   return (
     <div className="figure-panel">
-      <div className="figure-card figure-card-3d">
+      <div className="figure-card figure-card-3d" ref={viewerHostRef}>
         <Canvas camera={{ position: resolvedView?.camera || cfg.camera, fov: 44, near: 0.001, far: 2000 }}>
           <color attach="background" args={['#ecf9ff']} />
           <hemisphereLight intensity={cfg.light} groundColor="#8ea0af" />
@@ -208,7 +245,7 @@ export default function ExerciseStage({
             target={resolvedView?.target || cfg.target}
             enablePan
             screenSpacePanning
-            zoomSpeed={-1}
+            enableZoom={false}
             minDistance={2}
             maxDistance={50}
           />
