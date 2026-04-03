@@ -3,7 +3,6 @@ import { Box3, Color, RepeatWrapping, SRGBColorSpace, TextureLoader, Vector3 } f
 import { useAnimations, useFBX } from '@react-three/drei'
 import useClipPlayback from './useClipPlayback'
 import resolveAssetPath from './resolveAssetPath'
-import createProceduralExerciseClip from './createProceduralExerciseClip'
 
 function applyPbrTextures(model, maps) {
   model.traverse((node) => {
@@ -48,7 +47,38 @@ function normalizeModelPose(model) {
   model.position.y -= box.min.y
 }
 
-export default function FBXActor({ modelPath, clips = [], config }) {
+function buildNodeTree(node) {
+  return {
+    name: node.name || '',
+    type: node.type || 'Object3D',
+    children: (node.children || []).map(buildNodeTree)
+  }
+}
+
+function summarizeFbx(model, animations, info) {
+  const bones = []
+  let meshCount = 0
+  model.traverse((node) => {
+    if (node.isBone) bones.push(node.name)
+    if (node.isMesh) meshCount += 1
+  })
+
+  return {
+    modelAsset: info.modelAsset,
+    animationAsset: info.animationAsset,
+    meshCount,
+    boneCount: bones.length,
+    bones,
+    clips: (animations || []).map((clip) => ({
+      name: clip.name,
+      duration: Number((clip.duration || 0).toFixed(3)),
+      tracks: clip.tracks?.length || 0
+    })),
+    hierarchy: buildNodeTree(model)
+  }
+}
+
+export default function FBXActor({ modelPath, clips = [], config, onModelDebug, playbackControls }) {
   const resolvedModelPath = useMemo(() => resolveAssetPath(modelPath), [modelPath])
   const model = useFBX(resolvedModelPath)
 
@@ -101,17 +131,11 @@ export default function FBXActor({ modelPath, clips = [], config }) {
       }
     }
 
-    const wanted = config?.clip
-    if (wanted && !localByName.has(wanted)) {
-      const procedural = createProceduralExerciseClip(model, wanted)
-      if (procedural) merged.push(procedural)
-    }
-
     return merged
-  }, [model, model.animations, clipAsset?.animations, config?.clip])
+  }, [model, model.animations, clipAsset?.animations])
 
   const { actions, mixer } = useAnimations(mergedAnimations, model)
-  useClipPlayback({ actions, clips, config })
+  useClipPlayback({ actions, clips, config, controls: playbackControls })
 
   useEffect(() => {
     normalizeModelPose(model)
@@ -122,6 +146,16 @@ export default function FBXActor({ modelPath, clips = [], config }) {
     if (!mixer) return undefined
     return () => mixer.stopAllAction()
   }, [mixer])
+
+  const debugPayload = useMemo(
+    () => summarizeFbx(model, mergedAnimations, { modelAsset: resolvedModelPath, animationAsset: resolvedClipAssetPath }),
+    [model, mergedAnimations, resolvedModelPath, resolvedClipAssetPath]
+  )
+
+  useEffect(() => {
+    if (!onModelDebug) return
+    onModelDebug(debugPayload)
+  }, [onModelDebug, debugPayload])
 
   return <primitive object={model} />
 }

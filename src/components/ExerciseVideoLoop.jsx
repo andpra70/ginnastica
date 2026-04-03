@@ -53,7 +53,16 @@ function formatSec(totalSeconds) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-export default function ExerciseVideoLoop({ exercise }) {
+function isReadyPlayer(player) {
+  return (
+    !!player &&
+    typeof player.seekTo === 'function' &&
+    typeof player.playVideo === 'function' &&
+    typeof player.getCurrentTime === 'function'
+  )
+}
+
+export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
   const playerHostRef = useRef(null)
   const timelineRef = useRef(null)
   const playerRef = useRef(null)
@@ -61,7 +70,8 @@ export default function ExerciseVideoLoop({ exercise }) {
   const movedDuringDragRef = useRef(false)
 
   const defaults = exercise?.video || { start: 0, end: 20, url: '' }
-  const videoId = useMemo(() => parseYouTubeVideoId(defaults.url), [defaults.url])
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState(defaults.url || videoSources[0] || '')
+  const videoId = useMemo(() => parseYouTubeVideoId(selectedVideoUrl), [selectedVideoUrl])
   const storageKey = `ginnastica.videoLoop.${exercise?.id || 'none'}`
 
   const [startSec, setStartSec] = useState(defaults.start)
@@ -79,6 +89,8 @@ export default function ExerciseVideoLoop({ exercise }) {
       setStartSec(defaults.start)
       setEndSec(defaults.end)
       setSegmentTitle(exercise?.name || '')
+      const fallbackUrl = defaults.url || videoSources[0] || ''
+      setSelectedVideoUrl(fallbackUrl)
       return
     }
 
@@ -87,16 +99,20 @@ export default function ExerciseVideoLoop({ exercise }) {
       const start = toNumber(saved.start, defaults.start)
       const end = toNumber(saved.end, defaults.end)
       const title = typeof saved.title === 'string' ? saved.title : ''
+      const savedUrl = typeof saved.videoUrl === 'string' ? saved.videoUrl : ''
+      const fallbackUrl = defaults.url || videoSources[0] || ''
       setStartSec(Math.max(0, start))
       setEndSec(Math.max(start + 1, end))
       setSegmentTitle(title || exercise?.name || '')
       setDurationSec((prev) => Math.max(prev, end + 10))
+      setSelectedVideoUrl(savedUrl || fallbackUrl)
     } catch {
       setStartSec(defaults.start)
       setEndSec(defaults.end)
       setSegmentTitle(exercise?.name || '')
+      setSelectedVideoUrl(defaults.url || videoSources[0] || '')
     }
-  }, [storageKey, defaults.start, defaults.end, exercise?.name])
+  }, [storageKey, defaults.start, defaults.end, defaults.url, exercise?.name, videoSources])
 
   useEffect(() => {
     if (!videoId || !playerHostRef.current) return undefined
@@ -106,7 +122,9 @@ export default function ExerciseVideoLoop({ exercise }) {
       if (cancelled) return
 
       if (playerRef.current) {
-        playerRef.current.destroy()
+        if (typeof playerRef.current.destroy === 'function') {
+          playerRef.current.destroy()
+        }
         playerRef.current = null
       }
 
@@ -121,7 +139,7 @@ export default function ExerciseVideoLoop({ exercise }) {
         events: {
           onReady: () => {
             const player = playerRef.current
-            if (!player) return
+            if (!isReadyPlayer(player)) return
             const duration = Number(player.getDuration?.() || 0)
             if (duration > 1) setDurationSec(duration)
             player.seekTo(startSec, true)
@@ -134,14 +152,16 @@ export default function ExerciseVideoLoop({ exercise }) {
     return () => {
       cancelled = true
       if (playerRef.current) {
-        playerRef.current.destroy()
+        if (typeof playerRef.current.destroy === 'function') {
+          playerRef.current.destroy()
+        }
         playerRef.current = null
       }
     }
   }, [videoId])
 
   useEffect(() => {
-    if (!playerRef.current) return undefined
+    if (!isReadyPlayer(playerRef.current)) return undefined
 
     if (pollerRef.current) {
       window.clearInterval(pollerRef.current)
@@ -149,12 +169,14 @@ export default function ExerciseVideoLoop({ exercise }) {
     }
 
     const player = playerRef.current
-    player.seekTo(startSec, true)
-    player.playVideo()
+    if (isReadyPlayer(player)) {
+      player.seekTo(startSec, true)
+      player.playVideo()
+    }
 
     pollerRef.current = window.setInterval(() => {
       const p = playerRef.current
-      if (!p?.getCurrentTime) return
+      if (!isReadyPlayer(p)) return
       const now = p.getCurrentTime()
       setCurrentSec(now)
       const duration = Number(p.getDuration?.() || 0)
@@ -170,7 +192,7 @@ export default function ExerciseVideoLoop({ exercise }) {
       JSON.stringify({
         exerciseId: exercise.id,
         title: segmentTitle || exercise.name,
-        videoUrl: defaults.url,
+        videoUrl: selectedVideoUrl,
         start: Number(startSec.toFixed(1)),
         end: Number(endSec.toFixed(1)),
         snippet: `{"title":"${segmentTitle || exercise.name}","start":${Number(startSec.toFixed(1))},"stop":${Number(endSec.toFixed(1))}}`
@@ -183,9 +205,9 @@ export default function ExerciseVideoLoop({ exercise }) {
         pollerRef.current = null
       }
     }
-  }, [startSec, endSec, storageKey, exercise.id, exercise.name, defaults.url, segmentTitle])
+  }, [startSec, endSec, storageKey, exercise.id, exercise.name, selectedVideoUrl, segmentTitle])
 
-  if (!exercise?.video?.url) {
+  if (!selectedVideoUrl) {
     return null
   }
 
@@ -196,13 +218,13 @@ export default function ExerciseVideoLoop({ exercise }) {
   const segmentPct = clamp(endPct - startPct, 0, 100)
 
   const setLoopStartFromCurrent = () => {
-    const now = playerRef.current?.getCurrentTime ? playerRef.current.getCurrentTime() : startSec
+    const now = isReadyPlayer(playerRef.current) ? playerRef.current.getCurrentTime() : startSec
     const nextStart = Math.max(0, Math.min(now, endSec - 1))
     setStartSec(Number(nextStart.toFixed(1)))
   }
 
   const setLoopEndFromCurrent = () => {
-    const now = playerRef.current?.getCurrentTime ? playerRef.current.getCurrentTime() : endSec
+    const now = isReadyPlayer(playerRef.current) ? playerRef.current.getCurrentTime() : endSec
     const nextEnd = Math.max(startSec + 1, now)
     setEndSec(Number(nextEnd.toFixed(1)))
   }
@@ -214,7 +236,7 @@ export default function ExerciseVideoLoop({ exercise }) {
       title,
       start: Number(startSec.toFixed(1)),
       stop: Number(endSec.toFixed(1)),
-      videoUrl: defaults.url,
+      videoUrl: selectedVideoUrl,
       savedAt: new Date().toISOString()
     }
 
@@ -305,7 +327,7 @@ export default function ExerciseVideoLoop({ exercise }) {
       })
 
       const player = playerRef.current
-      if (player?.seekTo) {
+      if (isReadyPlayer(player)) {
         player.seekTo(startSec, true)
         player.playVideo()
       }
@@ -359,9 +381,25 @@ export default function ExerciseVideoLoop({ exercise }) {
       <div className="video-frame" ref={playerHostRef} />
 
       <div className="video-actions">
-        <button type="button" onClick={setLoopStartFromCurrent}>Set Inizio</button>
+          <button type="button" onClick={setLoopStartFromCurrent}>Set Inizio</button>
         <button type="button" onClick={setLoopEndFromCurrent}>Set Fine</button>
       </div>
+
+      {videoSources.length ? (
+        <div className="video-source-select">
+          <label>
+            Video sorgente
+            <select
+              value={selectedVideoUrl}
+              onChange={(event) => setSelectedVideoUrl(event.target.value)}
+            >
+              {videoSources.map((url) => (
+                <option key={url} value={url}>{url}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      ) : null}
 
       <div
         className="audio-clip-editor"
@@ -380,7 +418,9 @@ export default function ExerciseVideoLoop({ exercise }) {
           } else {
             setEndSec(clamp(Number(sec.toFixed(1)), startSec + 1, safeDuration))
           }
-          playerRef.current?.seekTo(sec, true)
+          if (isReadyPlayer(playerRef.current)) {
+            playerRef.current.seekTo(sec, true)
+          }
         }}
       >
         <div className="audio-wave" />

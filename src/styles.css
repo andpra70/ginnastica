@@ -51,6 +51,29 @@ body {
   color: var(--ink-soft);
 }
 
+.top-nav {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.top-nav button {
+  border: 1px solid var(--line);
+  background: #fffefb;
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.top-nav button.active {
+  border-color: var(--accent-2);
+  box-shadow: inset 0 0 0 1px var(--accent-2);
+  background: #edf7fb;
+}
+
 .panel {
   background: var(--card);
   border: 2px solid var(--line);
@@ -191,6 +214,10 @@ input[type='range'] {
   padding: 0.45rem 0.7rem;
   font-weight: 700;
   cursor: pointer;
+}
+
+.video-source-select {
+  margin-top: 0.7rem;
 }
 
 .audio-clip-editor {
@@ -410,6 +437,70 @@ input[type='range'] {
   height: 100% !important;
   display: block;
   border-radius: 12px;
+}
+
+.figure-panel {
+  width: min(420px, 100%);
+}
+
+.fbx-debug-tools {
+  margin-top: 0.5rem;
+}
+
+.fbx-play-controls {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.fbx-play-controls label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.fbx-play-controls select {
+  width: 100%;
+}
+
+.fbx-play-buttons {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.fbx-play-buttons button {
+  flex: 1;
+  border: 1px solid var(--accent);
+  background: #ffe9dd;
+  color: #6c2b0f;
+  border-radius: 10px;
+  padding: 0.35rem 0.6rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fbx-debug-tools button {
+  border: 1px solid var(--accent-2);
+  background: #eef7fb;
+  color: #123e50;
+  border-radius: 10px;
+  padding: 0.35rem 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+}
+
+.fbx-debug-json {
+  margin: 0.5rem 0 0;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #c7d6df;
+  border-radius: 10px;
+  background: #f8fbfd;
+  padding: 0.6rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre;
 }
 
 .demo-svg {

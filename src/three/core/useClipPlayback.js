@@ -5,10 +5,11 @@ function toLoopMode(loop) {
   return loop === 'once' ? LoopOnce : LoopRepeat
 }
 
-export default function useClipPlayback({ actions, clips = [], config }) {
-  const clipName = config?.clip ?? 'Idle'
+export default function useClipPlayback({ actions, clips = [], config, controls }) {
+  const clipName = controls?.clipName || config?.clip || 'Idle'
   const playbackRate = config?.playbackRate ?? 1
   const loop = config?.loop ?? 'repeat'
+  const isPlaying = controls?.isPlaying ?? true
 
   const selectedClip = useMemo(() => {
     if (!actions) return null
@@ -20,11 +21,17 @@ export default function useClipPlayback({ actions, clips = [], config }) {
       if (actions[candidate]) return actions[candidate]
     }
 
-    return actions.Idle || null
+    if (actions.Idle) return actions.Idle
+    const first = Object.keys(actions)[0]
+    return first ? actions[first] : null
   }, [actions, clipName, clips])
 
   useEffect(() => {
     if (!selectedClip) return undefined
+    if (!isPlaying) {
+      selectedClip.stop()
+      return undefined
+    }
 
     selectedClip.reset()
     selectedClip.setLoop(toLoopMode(loop), Infinity)
@@ -35,7 +42,7 @@ export default function useClipPlayback({ actions, clips = [], config }) {
     return () => {
       selectedClip.stop()
     }
-  }, [selectedClip, loop, playbackRate])
+  }, [selectedClip, loop, playbackRate, isPlaying])
 
   return selectedClip
 }
