@@ -1,0 +1,96 @@
+{
+  "modelAsset": "/ginnastica/assets3d/Man.fbx",
+  "animationsRoot": "/ginnastica/assets/animations",
+  "default": {
+    "clip": "Idle",
+    "playbackRate": 1,
+    "loop": "repeat",
+    "camera": [2.1, 1.6, 3.0],
+    "target": [0, 1.0, 0],
+    "light": 1.1,
+    "environment": "studio",
+    "textures": {
+      "baseColor": "/ginnastica/assets3d/textures/man_basecolor.jpg",
+      "normal": "/ginnastica/assets3d/textures/man_normal.png",
+      "roughness": "/ginnastica/assets3d/textures/man_roughness.png",
+      "height": "/ginnastica/assets3d/textures/man_height.png"
+    }
+  },
+  "pushup": {
+    "clip": "PushUp",
+    "playbackRate": 1,
+    "loop": "repeat",
+    "camera": [2.5, 1.2, 2.9],
+    "target": [0, 0.8, 0]
+  },
+  "squat": {
+    "clip": "Squat",
+    "playbackRate": 1,
+    "loop": "repeat",
+    "camera": [2.2, 1.6, 3.2],
+    "target": [0, 1.0, 0]
+  },
+  "plank": {
+    "clip": "FrontPlank",
+    "playbackRate": 0.85,
+    "loop": "repeat",
+    "camera": [2.4, 1.0, 3.1],
+    "target": [0, 0.7, 0]
+  },
+  "lunge": {
+    "clip": "ReverseLunge",
+    "playbackRate": 0.95,
+    "loop": "repeat",
+    "camera": [2.3, 1.5, 3.1],
+    "target": [0, 1.0, 0]
+  },
+  "pike": {
+    "clip": "PikePushUp",
+    "playbackRate": 0.9,
+    "loop": "repeat",
+    "camera": [2.4, 1.4, 2.9],
+    "target": [0, 0.9, 0]
+  },
+  "hollow": {
+    "clip": "HollowHold",
+    "playbackRate": 0.9,
+    "loop": "repeat",
+    "camera": [2.4, 1.1, 3.0],
+    "target": [0, 0.7, 0]
+  },
+  "row": {
+    "clip": "AustralianRow",
+    "playbackRate": 1,
+    "loop": "repeat",
+    "camera": [2.3, 1.2, 3.0],
+    "target": [0, 0.9, 0]
+  },
+  "jumpSquat": {
+    "clip": "JumpSquat",
+    "playbackRate": 1,
+    "loop": "repeat",
+    "camera": [2.3, 1.7, 3.1],
+    "target": [0, 1.1, 0]
+  },
+  "gluteBridge": {
+    "clip": "GluteBridge",
+    "playbackRate": 0.95,
+    "loop": "repeat",
+    "camera": [2.4, 1.1, 3.1],
+    "target": [0, 0.75, 0]
+  },
+  "mountainClimber": {
+    "clip": "MountainClimber",
+    "playbackRate": 1.2,
+    "loop": "repeat",
+    "camera": [2.5, 1.1, 3.0],
+    "target": [0, 0.8, 0]
+  },
+  "deadBug": {
+    "clip": "DeadBug",
+    "playbackRate": 0.9,
+    "loop": "repeat",
+    "camera": [2.4, 1.0, 3.1],
+    "target": [0, 0.75, 0]
+  }
+}
