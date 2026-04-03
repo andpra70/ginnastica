@@ -4,13 +4,6 @@ import { Bounds, OrbitControls } from '@react-three/drei'
 import ModelActor from './ModelActor'
 import animationCfg from '../../config/exerciseAnimations.json'
 
-function getCfg(type) {
-  return {
-    ...animationCfg.default,
-    ...(animationCfg[type] ?? {})
-  }
-}
-
 function normalizeView(raw) {
   if (!raw || typeof raw !== 'object') return null
   const camera = Array.isArray(raw.camera) ? raw.camera.map(Number) : null
@@ -23,15 +16,13 @@ function normalizeView(raw) {
   }
 }
 
-export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved, clipName, onClipSelected }) {
-  const cfg = getCfg(type)
+export default function ExerciseStage({ cardId, cameraView, onCameraSaved, clipName, onClipSelected, onClipOptions }) {
+  const cfg = animationCfg.default || {}
   const controlsRef = useRef(null)
-  const legacyStorageKey = `ginnastica.camera.${type}`
-  const scopedStorageKey = cardId ? `ginnastica.camera.card.${cardId}` : legacyStorageKey
+  const scopedStorageKey = `ginnastica.camera.card.${cardId || 'default'}`
   const [showFbxJson, setShowFbxJson] = useState(false)
   const [fbxDebug, setFbxDebug] = useState(null)
   const [selectedClipName, setSelectedClipName] = useState(clipName || cfg.clip || '')
-  const [isPlayingClip, setIsPlayingClip] = useState(true)
 
   const fbxJson = useMemo(() => {
     if (!fbxDebug) return ''
@@ -48,8 +39,12 @@ export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved,
   )
 
   useEffect(() => {
+    onClipOptions?.(clipNames)
+  }, [clipNames, onClipOptions])
+
+  useEffect(() => {
     setSelectedClipName(clipName || cfg.clip || '')
-  }, [clipName, cfg.clip, cardId, type])
+  }, [clipName, cfg.clip, cardId])
 
   useEffect(() => {
     if (!clipNames.length) return
@@ -72,18 +67,8 @@ export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved,
     } catch {
       // Ignore malformed persisted view
     }
-
-    try {
-      const legacyRaw = window.localStorage.getItem(legacyStorageKey)
-      if (legacyRaw) {
-        const legacy = normalizeView(JSON.parse(legacyRaw))
-        if (legacy) return legacy
-      }
-    } catch {
-      // Ignore malformed legacy view
-    }
     return null
-  }, [cameraView, scopedStorageKey, legacyStorageKey])
+  }, [cameraView, scopedStorageKey])
 
   useEffect(() => {
     const controls = controlsRef.current
@@ -91,7 +76,7 @@ export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved,
     controls.object.position.set(...resolvedView.camera)
     controls.target.set(...resolvedView.target)
     controls.update()
-  }, [resolvedView, cardId, type])
+  }, [resolvedView, cardId])
 
   const persistCameraView = useCallback((event) => {
     const camera = event?.target?.object
@@ -111,7 +96,6 @@ export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved,
 
     const payload = {
       cardId: cardId || null,
-      type,
       savedAt: new Date().toISOString(),
       camera: position,
       target: lookAt,
@@ -121,13 +105,12 @@ export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved,
 
     try {
       localStorage.setItem(scopedStorageKey, JSON.stringify(payload))
-      localStorage.setItem(legacyStorageKey, JSON.stringify(payload))
       localStorage.setItem('ginnastica.camera.last', JSON.stringify(payload))
     } catch {
       // Ignore storage errors (e.g. privacy mode)
     }
     onCameraSaved?.(payload)
-  }, [scopedStorageKey, legacyStorageKey, type, cardId, onCameraSaved])
+  }, [scopedStorageKey, cardId, onCameraSaved])
 
   return (
     <div className="figure-panel">
@@ -139,12 +122,12 @@ export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved,
 
           <Suspense fallback={null}>
             <Bounds fit clip observe margin={3.2}>
-              <group key={type}>
+              <group key={cardId || 'viewer'}>
                 <ModelActor
                   modelPath={animationCfg.modelAsset}
                   config={cfg}
                   onModelDebug={setFbxDebug}
-                  playbackControls={{ clipName: selectedClipName, isPlaying: isPlayingClip }}
+                  playbackControls={{ clipName: selectedClipName, isPlaying: true }}
                 />
               </group>
             </Bounds>
@@ -179,7 +162,6 @@ export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved,
                   onChange={(event) => {
                     const nextClip = event.target.value
                     setSelectedClipName(nextClip)
-                    setIsPlayingClip(true)
                     onClipSelected?.(nextClip)
                   }}
                   disabled={!clipNames.length}
@@ -193,10 +175,6 @@ export default function ExerciseStage({ type, cardId, cameraView, onCameraSaved,
                   )}
                 </select>
               </label>
-              <div className="fbx-play-buttons">
-                <button type="button" onClick={() => setIsPlayingClip(true)} disabled={!clipNames.length}>Play</button>
-                <button type="button" onClick={() => setIsPlayingClip(false)} disabled={!clipNames.length}>Stop</button>
-              </div>
             </div>
 
             <button type="button" onClick={() => setShowFbxJson((v) => !v)}>

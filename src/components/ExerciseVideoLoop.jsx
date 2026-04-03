@@ -62,12 +62,17 @@ function isReadyPlayer(player) {
   )
 }
 
-export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
+export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegmentChange, editable = false }) {
   const playerHostRef = useRef(null)
   const timelineRef = useRef(null)
   const playerRef = useRef(null)
   const pollerRef = useRef(null)
   const movedDuringDragRef = useRef(false)
+  const onSegmentChangeRef = useRef(onSegmentChange)
+
+  useEffect(() => {
+    onSegmentChangeRef.current = onSegmentChange
+  }, [onSegmentChange])
 
   const defaults = exercise?.video || { start: 0, end: 20, url: '' }
   const [selectedVideoUrl, setSelectedVideoUrl] = useState(defaults.url || videoSources[0] || '')
@@ -77,18 +82,14 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
   const [startSec, setStartSec] = useState(defaults.start)
   const [endSec, setEndSec] = useState(defaults.end)
   const [currentSec, setCurrentSec] = useState(0)
-  const [segmentTitle, setSegmentTitle] = useState('')
   const [durationSec, setDurationSec] = useState(Math.max(defaults.end + 10, 60))
   const [draggingHandle, setDraggingHandle] = useState(null)
-  const [exporting, setExporting] = useState(false)
-  const [exportStatus, setExportStatus] = useState('')
 
   useEffect(() => {
     const savedRaw = localStorage.getItem(storageKey)
     if (!savedRaw) {
       setStartSec(defaults.start)
       setEndSec(defaults.end)
-      setSegmentTitle(exercise?.name || '')
       const fallbackUrl = defaults.url || videoSources[0] || ''
       setSelectedVideoUrl(fallbackUrl)
       return
@@ -98,21 +99,18 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
       const saved = JSON.parse(savedRaw)
       const start = toNumber(saved.start, defaults.start)
       const end = toNumber(saved.end, defaults.end)
-      const title = typeof saved.title === 'string' ? saved.title : ''
       const savedUrl = typeof saved.videoUrl === 'string' ? saved.videoUrl : ''
       const fallbackUrl = defaults.url || videoSources[0] || ''
       setStartSec(Math.max(0, start))
       setEndSec(Math.max(start + 1, end))
-      setSegmentTitle(title || exercise?.name || '')
       setDurationSec((prev) => Math.max(prev, end + 10))
       setSelectedVideoUrl(savedUrl || fallbackUrl)
     } catch {
       setStartSec(defaults.start)
       setEndSec(defaults.end)
-      setSegmentTitle(exercise?.name || '')
       setSelectedVideoUrl(defaults.url || videoSources[0] || '')
     }
-  }, [storageKey, defaults.start, defaults.end, defaults.url, exercise?.name, videoSources])
+  }, [storageKey, defaults.start, defaults.end, defaults.url, videoSources])
 
   useEffect(() => {
     if (!videoId || !playerHostRef.current) return undefined
@@ -191,13 +189,17 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
       storageKey,
       JSON.stringify({
         exerciseId: exercise.id,
-        title: segmentTitle || exercise.name,
         videoUrl: selectedVideoUrl,
         start: Number(startSec.toFixed(1)),
         end: Number(endSec.toFixed(1)),
-        snippet: `{"title":"${segmentTitle || exercise.name}","start":${Number(startSec.toFixed(1))},"stop":${Number(endSec.toFixed(1))}}`
+        snippet: `{"start":${Number(startSec.toFixed(1))},"stop":${Number(endSec.toFixed(1))}}`
       })
     )
+    onSegmentChangeRef.current?.({
+      url: selectedVideoUrl,
+      start: Number(startSec.toFixed(1)),
+      end: Number(endSec.toFixed(1))
+    })
 
     return () => {
       if (pollerRef.current) {
@@ -205,53 +207,16 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
         pollerRef.current = null
       }
     }
-  }, [startSec, endSec, storageKey, exercise.id, exercise.name, selectedVideoUrl, segmentTitle])
+  }, [startSec, endSec, storageKey, exercise.id, selectedVideoUrl])
 
   if (!selectedVideoUrl) {
     return null
   }
 
-  const maxDuration = 600
   const safeDuration = Math.max(durationSec, endSec + 1, 10)
   const startPct = clamp((startSec / safeDuration) * 100, 0, 100)
   const endPct = clamp((endSec / safeDuration) * 100, 0, 100)
   const segmentPct = clamp(endPct - startPct, 0, 100)
-
-  const setLoopStartFromCurrent = () => {
-    const now = isReadyPlayer(playerRef.current) ? playerRef.current.getCurrentTime() : startSec
-    const nextStart = Math.max(0, Math.min(now, endSec - 1))
-    setStartSec(Number(nextStart.toFixed(1)))
-  }
-
-  const setLoopEndFromCurrent = () => {
-    const now = isReadyPlayer(playerRef.current) ? playerRef.current.getCurrentTime() : endSec
-    const nextEnd = Math.max(startSec + 1, now)
-    setEndSec(Number(nextEnd.toFixed(1)))
-  }
-
-  const saveNamedSegment = () => {
-    const title = (segmentTitle || '').trim() || exercise.name
-    const key = `ginnastica.videoLoop.segments.${exercise.id}`
-    const payload = {
-      title,
-      start: Number(startSec.toFixed(1)),
-      stop: Number(endSec.toFixed(1)),
-      videoUrl: selectedVideoUrl,
-      savedAt: new Date().toISOString()
-    }
-
-    let existing = []
-    try {
-      const raw = localStorage.getItem(key)
-      existing = raw ? JSON.parse(raw) : []
-      if (!Array.isArray(existing)) existing = []
-    } catch {
-      existing = []
-    }
-
-    const withoutSameTitle = existing.filter((item) => item?.title !== title)
-    localStorage.setItem(key, JSON.stringify([payload, ...withoutSameTitle]))
-  }
 
   const pointerXToSec = (clientX) => {
     const rect = timelineRef.current?.getBoundingClientRect()
@@ -292,78 +257,10 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
     }
   }, [draggingHandle, safeDuration, startSec, endSec])
 
-  const exportSegmentVideo = async () => {
-    if (exporting) return
-    if (!window.MediaRecorder || !navigator.mediaDevices?.getDisplayMedia) {
-      setExportStatus('Export non supportato in questo browser.')
-      return
-    }
-
-    setExporting(true)
-    setExportStatus('Seleziona la tab dell’app nella finestra di condivisione...')
-
-    let stream
-    try {
-      stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: 30 },
-        audio: true
-      })
-
-      const candidates = [
-        'video/webm;codecs=vp9,opus',
-        'video/webm;codecs=vp8,opus',
-        'video/webm'
-      ]
-      const mimeType = candidates.find((type) => MediaRecorder.isTypeSupported(type)) || ''
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
-      const chunks = []
-
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) chunks.push(event.data)
-      }
-
-      const stopped = new Promise((resolve) => {
-        recorder.onstop = resolve
-      })
-
-      const player = playerRef.current
-      if (isReadyPlayer(player)) {
-        player.seekTo(startSec, true)
-        player.playVideo()
-      }
-
-      setExportStatus('Registrazione in corso...')
-      recorder.start(200)
-      const durationMs = Math.max(1000, Math.round((endSec - startSec) * 1000))
-      window.setTimeout(() => {
-        if (recorder.state !== 'inactive') recorder.stop()
-      }, durationMs + 100)
-
-      await stopped
-      stream.getTracks().forEach((track) => track.stop())
-
-      if (!chunks.length) {
-        setExportStatus('Nessun frame registrato. Riprova condividendo la tab del browser.')
-        return
-      }
-
-      const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' })
-      const title = (segmentTitle || exercise.name).trim().replace(/\s+/g, '_')
-      const filename = `${title}_${startSec.toFixed(1)}-${endSec.toFixed(1)}.webm`
-      const href = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = href
-      a.download = filename
-      a.click()
-      URL.revokeObjectURL(href)
-
-      setExportStatus(`Esportato: ${filename}`)
-    } catch {
-      if (stream) stream.getTracks().forEach((track) => track.stop())
-      setExportStatus('Export annullato o fallito.')
-    } finally {
-      setExporting(false)
-    }
+  if (!editable) {
+    return (
+      <div className="video-frame video-frame-embedded" ref={playerHostRef} />
+    )
   }
 
   return (
@@ -379,11 +276,6 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
       </div>
 
       <div className="video-frame" ref={playerHostRef} />
-
-      <div className="video-actions">
-          <button type="button" onClick={setLoopStartFromCurrent}>Set Inizio</button>
-        <button type="button" onClick={setLoopEndFromCurrent}>Set Fine</button>
-      </div>
 
       {videoSources.length ? (
         <div className="video-source-select">
@@ -467,56 +359,7 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [] }) {
         />
       </div>
 
-      <div className="video-save-row">
-        <label>
-          Titolo segmento
-          <input
-            type="text"
-            value={segmentTitle}
-            onChange={(event) => setSegmentTitle(event.target.value)}
-            placeholder="es. riscaldamento"
-          />
-        </label>
-        <div className="video-save-actions">
-          <button type="button" onClick={saveNamedSegment}>Salva Segmento</button>
-          <button type="button" onClick={exportSegmentVideo} disabled={exporting}>
-            {exporting ? 'Export in corso...' : 'Export Video'}
-          </button>
-        </div>
-      </div>
-      {exportStatus ? <p className="hint">{exportStatus}</p> : null}
-
-      <div className="video-controls">
-        <label>
-          Start (secondi)
-          <input
-            type="number"
-            min="0"
-            max={Math.max(0, endSec - 1)}
-            step="0.5"
-            value={startSec}
-            onChange={(event) => {
-              const next = Math.max(0, toNumber(event.target.value, startSec))
-              setStartSec(Math.min(next, endSec - 1))
-            }}
-          />
-        </label>
-
-        <label>
-          End (secondi)
-          <input
-            type="number"
-            min={startSec + 1}
-            max={maxDuration}
-            step="0.5"
-            value={endSec}
-            onChange={(event) => {
-              const next = Math.max(startSec + 1, toNumber(event.target.value, endSec))
-              setEndSec(next)
-            }}
-          />
-        </label>
-      </div>
+      {null}
     </section>
   )
 }
