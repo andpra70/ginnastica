@@ -806,10 +806,6 @@ export default function App() {
         </>
       ) : null}
 
-      <footer className="app-footer">
-        <div className="brand-logo" aria-hidden>GT</div>
-        <span>Trainer</span>
-      </footer>
     </main>
   )
 }

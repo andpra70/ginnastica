@@ -941,16 +941,6 @@ input[type='range'] {
   cursor: pointer;
 }
 
-.app-footer {
-  border-top: 2px solid var(--line);
-  padding: 0.72rem 0.25rem 0.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--ink-soft);
-  font-size: 0.9rem;
-}
-
 /* Compact trainer overrides requested */
 .layout.compact-layout {
   width: 100%;
