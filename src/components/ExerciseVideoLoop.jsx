@@ -76,7 +76,8 @@ export default function ExerciseVideoLoop({
   videoSources = [],
   onSegmentChange,
   editable = false,
-  muted = true
+  muted = true,
+  volumePct = 100
 }) {
   const playerHostRef = useRef(null)
   const timelineRef = useRef(null)
@@ -128,6 +129,7 @@ export default function ExerciseVideoLoop({
       if (existing && existingIframe?.parentElement === host) {
         try {
           existing.loadVideoById?.({ videoId, startSeconds: startSec })
+          existing.setVolume?.(Math.max(0, Math.min(100, Number(volumePct) || 0)))
           if (muted) existing.mute?.()
           else existing.unMute?.()
           existing.playVideo?.()
@@ -157,6 +159,7 @@ export default function ExerciseVideoLoop({
           onReady: () => {
             const player = playerRef.current
             if (!isReadyPlayer(player)) return
+            player.setVolume?.(Math.max(0, Math.min(100, Number(volumePct) || 0)))
             if (muted) player.mute?.()
             else player.unMute?.()
             const duration = Number(player.getDuration?.() || 0)
@@ -181,14 +184,15 @@ export default function ExerciseVideoLoop({
       safeDestroyPlayer(playerRef.current)
       playerRef.current = null
     }
-  }, [videoId, autoRangeFromDuration, muted])
+  }, [videoId, autoRangeFromDuration, muted, volumePct])
 
   useEffect(() => {
     const player = playerRef.current
     if (!isReadyPlayer(player)) return
+    player.setVolume?.(Math.max(0, Math.min(100, Number(volumePct) || 0)))
     if (muted) player.mute?.()
     else player.unMute?.()
-  }, [muted])
+  }, [muted, volumePct])
 
   useEffect(() => {
     if (!isReadyPlayer(playerRef.current)) return undefined

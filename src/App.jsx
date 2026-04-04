@@ -162,12 +162,23 @@ function clampRange(value, min, max) {
 function pickSpeechVoice(voices, gender) {
   if (!Array.isArray(voices) || !voices.length) return null
   const italian = voices.filter((voice) => /(^it[-_]|ital)/i.test(`${voice.lang || ''} ${voice.name || ''}`))
-  const pool = italian.length ? italian : voices
   const femaleHints = /(female|woman|fem|minnie|chiara|alice|elsa|sara|paola|lucia|giulia)/i
-  const maleHints = /(male|man|mas|luca|marco|giorgio|paolo|roberto|federico)/i
-  const matcher = gender === 'maschio' ? maleHints : femaleHints
-  const preferred = pool.find((voice) => matcher.test(`${voice.name || ''} ${voice.voiceURI || ''}`))
-  return preferred || pool[0] || null
+  const maleHints = /(male|man|mas|luca|marco|giorgio|paolo|roberto|federico|diego|giovanni|francesco|antonio|google italiano)/i
+  const preferredHints = gender === 'maschio' ? maleHints : femaleHints
+  const oppositeHints = gender === 'maschio' ? femaleHints : maleHints
+
+  const matchByHints = (pool) => pool.find((voice) => preferredHints.test(`${voice.name || ''} ${voice.voiceURI || ''}`))
+  const matchAvoidOpposite = (pool) => pool.find((voice) => !oppositeHints.test(`${voice.name || ''} ${voice.voiceURI || ''}`))
+
+  return (
+    matchByHints(italian)
+    || matchByHints(voices)
+    || matchAvoidOpposite(italian)
+    || matchAvoidOpposite(voices)
+    || italian[0]
+    || voices[0]
+    || null
+  )
 }
 
 function buildExerciseSpeechText(card, flags = {}) {
@@ -488,6 +499,7 @@ function CardViewer({ card }) {
             videoSources={card.videoSources || []}
             onSegmentChange={handleVideoSegmentChange}
             muted={Boolean(card.videoMuted)}
+            volumePct={Number(card.videoVolumePct ?? 100)}
             editable
           />
         </div>
@@ -501,6 +513,7 @@ function CardViewer({ card }) {
           videoSources={card.videoSources || []}
           onSegmentChange={undefined}
           muted={Boolean(card.videoMuted)}
+          volumePct={Number(card.videoVolumePct ?? 100)}
           editable={false}
         />
       </div>
@@ -609,6 +622,12 @@ export default function App() {
   const [videoAudioEnabled, setVideoAudioEnabled] = useState(() => {
     if (typeof window === 'undefined') return false
     return getStoredValue('ginnastica.settings.videoAudioEnabled') === '1'
+  })
+  const [videoVolumePct, setVideoVolumePct] = useState(() => {
+    if (typeof window === 'undefined') return 70
+    const rawStored = getStoredValue('ginnastica.settings.videoVolumePct')
+    if (rawStored == null || rawStored === '') return 70
+    return clampRange(Number(rawStored), 0, 100)
   })
   const [clockEnabled, setClockEnabled] = useState(() => {
     if (typeof window === 'undefined') return true
@@ -758,6 +777,10 @@ export default function App() {
   useEffect(() => {
     setStoredValue('ginnastica.settings.videoAudioEnabled', videoAudioEnabled ? '1' : '0')
   }, [videoAudioEnabled])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.videoVolumePct', String(videoVolumePct))
+  }, [videoVolumePct])
 
   useEffect(() => {
     setStoredValue('ginnastica.settings.clockEnabled', clockEnabled ? '1' : '0')
@@ -1144,6 +1167,25 @@ export default function App() {
     pulse(2450, t0 + 0.34, 0.09, 1.0)
   }, [clockEnabled, clockVolumePct])
 
+  const playVoiceSample = useCallback(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    if (!voiceEnabled) return
+    const synth = window.speechSynthesis
+    const utterance = new SpeechSynthesisUtterance('voce attiva')
+    const selectedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+    if (selectedVoice) {
+      utterance.voice = selectedVoice
+      utterance.lang = selectedVoice.lang || 'it-IT'
+    } else {
+      utterance.lang = 'it-IT'
+    }
+    utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
+    utterance.rate = 1
+    utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
+    synth.cancel()
+    synth.speak(utterance)
+  }, [voiceEnabled, voiceGender, voiceVolumePct])
+
   const ensureClockAudioReady = useCallback(async () => {
     if (typeof window === 'undefined') return
     const AudioCtx = window.AudioContext || window.webkitAudioContext
@@ -1270,7 +1312,7 @@ export default function App() {
     }
     utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
     utterance.rate = 1
-    utterance.pitch = voiceGender === 'maschio' ? 0.92 : 1.1
+    utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
     synth.cancel()
     synth.speak(utterance)
   }, [
@@ -1759,8 +1801,20 @@ export default function App() {
                 <h4>Video</h4>
                 <div className="settings-grid">
                   <SettingsToggle label="Audio video" checked={videoAudioEnabled} onChange={setVideoAudioEnabled} />
+                  <label>
+                    Volume video: {videoVolumePct}%
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={videoVolumePct}
+                      onChange={(e) => setVideoVolumePct(clampRange(Number(e.target.value), 0, 100))}
+                      disabled={!videoAudioEnabled}
+                    />
+                  </label>
                 </div>
-                <p className="hint">{videoAudioEnabled ? 'Audio video abilitato.' : 'Audio video disabilitato (default).'}</p>
+                <p className="hint">{videoAudioEnabled ? `Audio video abilitato (volume ${videoVolumePct}%).` : 'Audio video disabilitato (default).'}</p>
               </div>
             ) : null}
 
@@ -1793,6 +1847,7 @@ export default function App() {
                       disabled={!clockEnabled}
                     />
                   </label>
+                  <button type="button" className="icon-btn" onClick={playClockChime} disabled={!clockEnabled}>Soundcheck</button>
                 </div>
                 <p className="hint">{clockEnabled ? `Clock attivo: beep ogni ${clockCadenceSec} secondi (volume ${clockVolumePct}%).` : 'Clock disabilitato.'}</p>
               </div>
@@ -1829,6 +1884,7 @@ export default function App() {
                   <SettingsToggle label="Leggi Esecuzione" checked={voiceSpeakExecution} onChange={setVoiceSpeakExecution} disabled={!voiceEnabled} />
                   <SettingsToggle label="Leggi Respirazione" checked={voiceSpeakBreathing} onChange={setVoiceSpeakBreathing} disabled={!voiceEnabled} />
                   <SettingsToggle label="Leggi Errori" checked={voiceSpeakErrors} onChange={setVoiceSpeakErrors} disabled={!voiceEnabled} />
+                  <button type="button" className="icon-btn" onClick={playVoiceSample} disabled={!voiceEnabled}>Test Voice</button>
                 </div>
                 <p className="hint">{voiceEnabled ? `Vocale attivo (${voiceGender}, volume ${voiceVolumePct}%).` : 'Vocale disabilitato.'}</p>
               </div>
@@ -1904,9 +1960,9 @@ export default function App() {
               </section>
 
               {playMode ? (
-                currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled }} cardProgressPct={currentCardProgressPct} /> : null
+                currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled, videoVolumePct }} cardProgressPct={currentCardProgressPct} /> : null
               ) : (
-                selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled }} cardProgressPct={currentCardProgressPct} /> : null
+                selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled, videoVolumePct }} cardProgressPct={currentCardProgressPct} /> : null
               )}
 
               {isEditMode && selectedCard ? (
