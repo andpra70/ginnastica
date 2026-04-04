@@ -5,10 +5,10 @@
   --bg-soft: #f6f9fd;
   --ink: #0f2236;
   --ink-soft: #4f6379;
-  --accent: #00a8e0;
-  --accent-2: #0072ce;
+  --accent: #4f6379;
+  --accent-2: #4f6379;
   --card: #ffffff;
-  --line: #d0dbe7;
+  --line: transparent;
 }
 
 [data-theme='femmina'] {
@@ -16,10 +16,10 @@
   --bg-soft: #faf7fd;
   --ink: #31233c;
   --ink-soft: #66577a;
-  --accent: #b95bd5;
-  --accent-2: #8d4ac8;
+  --accent: #66577a;
+  --accent-2: #66577a;
   --card: #ffffff;
-  --line: #ddd3e6;
+  --line: transparent;
 }
 
 [data-theme='femmina'] body {
@@ -764,8 +764,8 @@ input[type='range'] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
-  padding: 0.18rem 0.36rem;
+  min-height: 56px;
+  padding: 0.22rem 0.42rem;
   border: 1px solid #c6d7e8;
   background: #f4f9ff;
 }
@@ -783,7 +783,7 @@ input[type='range'] {
 
 .brand-logo-img {
   width: auto;
-  height: 30px;
+  height: 52px;
   max-height: none;
   display: block;
 }
@@ -1625,6 +1625,52 @@ input[type='range'] {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Neutral mode: remove borders and accent styling */
+.hero,
+.timer-strip,
+.panel,
+.program-card,
+.card-nav,
+.editor-panel,
+.setup-panel,
+.editor-grid,
+.inline-video-editor,
+.video-sources-editor,
+.weight-panel,
+.weight-history-item,
+.weight-chart-wrap,
+.history-day,
+.history-event-item,
+.history-event-detail,
+.vertical-sections article,
+.burger-menu,
+.brand-logo-shell,
+.brand-logo,
+.burger-btn,
+.icon-btn,
+.top-nav button,
+.play-actions button,
+.timer-actions button,
+.setup-nav button,
+.weight-entry-row button,
+.weight-history-item button,
+.history-calendar-head button {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.top-nav button.active,
+.top-nav button.play-active,
+.burger-menu button.active,
+.mini-tabs button.active,
+.history-day.has-events,
+.history-day.selected,
+.history-event-item.active {
+  background: #fff !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
 @media (max-width: 720px) {
   .layout {
     padding: 0.7rem;
@@ -1700,7 +1746,7 @@ input[type='range'] {
   }
 
   .brand-logo-img {
-    height: 24px;
+    height: 40px;
   }
 
   .brand-row h1 {

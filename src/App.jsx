@@ -474,7 +474,7 @@ export default function App() {
 
   const isEditMode = getEditMode()
   const iconBase = `${import.meta.env.BASE_URL}icons`
-  const logoSrc = `${import.meta.env.BASE_URL}logone.png`
+  const logoSrc = `${iconBase}/logo.png`
   const sectionIcons = {
     profile: `${iconBase}/profile.png`,
     setup: `${iconBase}/setup.png`,
