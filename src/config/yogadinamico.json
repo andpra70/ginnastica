@@ -1,7 +1,7 @@
 {
   "videoSources": [
-    "https://www.youtube.com/watch?v=uTYNPadVdic",
-    "https://www.youtube.com/watch?v=xK5PMmRbs0k"
+    "https://www.youtube.com/watch?v=NhyuseD1E2E",
+    "https://www.youtube.com/watch?v=2xlQ8h_kbQg"
   ],
   "allenamento": {
     "livelli": {
@@ -43,9 +43,9 @@
         "viewerType": "video",
         "classKey": "warmup",
         "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "url": "https://www.youtube.com/watch?v=NhyuseD1E2E",
           "start": 0,
-          "end": 20
+          "end": 341.8
         },
         "cameraView": null
       },
@@ -325,8 +325,8 @@
         "viewerType": "video",
         "classKey": "stretching",
         "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
-          "start": 260,
+          "url": "https://www.youtube.com/watch?v=NhyuseD1E2E",
+          "start": 0,
           "end": 300
         },
         "cameraView": null
@@ -354,9 +354,9 @@
         "viewerType": "video",
         "classKey": "warmup",
         "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "url": "https://www.youtube.com/watch?v=NhyuseD1E2E",
           "start": 0,
-          "end": 20
+          "end": 341.8
         },
         "cameraView": null
       },
@@ -640,8 +640,8 @@
         "viewerType": "video",
         "classKey": "stretching",
         "videoSegment": {
-          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
-          "start": 260,
+          "url": "https://www.youtube.com/watch?v=NhyuseD1E2E",
+          "start": 0,
           "end": 300
         },
         "cameraView": null
