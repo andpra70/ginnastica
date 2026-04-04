@@ -32,11 +32,15 @@ function BoundsAutoFit({ request }) {
 
   useEffect(() => {
     if (!request?.seq) return
-    if (request.withClip) {
-      bounds.refresh().clip().fit()
-      return
+    // Fit first, then recompute clip planes; finally enlarge near/far a bit
+    // so animated limbs don't get clipped at the frustum edges.
+    const result = bounds.refresh().fit().clip()
+    const camera = result?.camera
+    if (camera) {
+      camera.near = Math.max(0.001, camera.near * 0.5)
+      camera.far = Math.max(camera.near + 1, camera.far * 1.5)
+      camera.updateProjectionMatrix()
     }
-    bounds.refresh().fit()
   }, [request, bounds])
 
   return null
@@ -73,12 +77,14 @@ export default function ExerciseStage({
   const onClipSelectedRef = useRef(onClipSelected)
   const onClipOptionsRef = useRef(onClipOptions)
   const previousModelRef = useRef(null)
+  const previousCardIdRef = useRef(cardId || null)
+  const skipNextModelAutofitRef = useRef(false)
   const shouldAutoPickFirstClipRef = useRef(false)
   const scopedStorageKey = `ginnastica.camera.card.${cardId || 'default'}`
   const [showFbxJson, setShowFbxJson] = useState(false)
   const [fbxDebug, setFbxDebug] = useState(null)
   const [selectedClipName, setSelectedClipName] = useState(clipName || cfg.clip || '')
-  const [autoFitRequest, setAutoFitRequest] = useState({ seq: 0, withClip: false })
+  const [autoFitRequest, setAutoFitRequest] = useState({ seq: 0 })
 
   const fbxJson = useMemo(() => {
     if (!fbxDebug) return ''
@@ -111,6 +117,13 @@ export default function ExerciseStage({
   }, [clipNames])
 
   useEffect(() => {
+    const normalizedCardId = cardId || null
+    if (previousCardIdRef.current === normalizedCardId) return
+    previousCardIdRef.current = normalizedCardId
+    skipNextModelAutofitRef.current = true
+  }, [cardId])
+
+  useEffect(() => {
     if (previousModelRef.current == null) {
       previousModelRef.current = selectedModel
       return
@@ -120,7 +133,11 @@ export default function ExerciseStage({
     shouldAutoPickFirstClipRef.current = true
     setSelectedClipName('')
     setFbxDebug(null)
-    setAutoFitRequest((prev) => ({ seq: prev.seq + 1, withClip: true }))
+    if (skipNextModelAutofitRef.current) {
+      skipNextModelAutofitRef.current = false
+      return
+    }
+    setAutoFitRequest((prev) => ({ seq: prev.seq + 1 }))
   }, [selectedModel])
 
   useEffect(() => {
@@ -315,7 +332,7 @@ export default function ExerciseStage({
                 className="fbx-autofit-btn"
                 title="AutoFit camera"
                 aria-label="AutoFit camera"
-                onClick={() => setAutoFitRequest((prev) => ({ seq: prev.seq + 1, withClip: false }))}
+                onClick={() => setAutoFitRequest((prev) => ({ seq: prev.seq + 1 }))}
               >
                 ⤢
               </button>

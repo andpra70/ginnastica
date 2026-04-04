@@ -16,6 +16,9 @@ const TRAINING_CONFIGS = {
   }
 }
 
+const PROFILE_STORAGE_KEY = 'ginnastica.profile'
+const SETUP_STEP_STORAGE_KEY = 'ginnastica.setup.step'
+
 function formatTime(totalSeconds) {
   const value = Math.max(0, Math.floor(totalSeconds))
   const minutes = Math.floor(value / 60)
@@ -209,6 +212,32 @@ function getSavedCameraView(cardId, storedCameraViews = {}) {
   return null
 }
 
+function readSavedProfile() {
+  if (typeof window === 'undefined') {
+    return {
+      nome: '',
+      cognome: '',
+      alias: '',
+      email: '',
+      sesso: 'maschio'
+    }
+  }
+  try {
+    const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY)
+    if (!raw) return { nome: '', cognome: '', alias: '', email: '', sesso: 'maschio' }
+    const parsed = JSON.parse(raw)
+    return {
+      nome: typeof parsed?.nome === 'string' ? parsed.nome : '',
+      cognome: typeof parsed?.cognome === 'string' ? parsed.cognome : '',
+      alias: typeof parsed?.alias === 'string' ? parsed.alias : '',
+      email: typeof parsed?.email === 'string' ? parsed.email : '',
+      sesso: typeof parsed?.sesso === 'string' ? parsed.sesso : 'maschio'
+    }
+  } catch {
+    return { nome: '', cognome: '', alias: '', email: '', sesso: 'maschio' }
+  }
+}
+
 function CardViewer({ card }) {
   const handleVideoSegmentChange = useCallback(
     (segment) => card.onVideoSegmentChange?.(card.id, segment),
@@ -313,6 +342,13 @@ function ProgramCard({ card }) {
 export default function App() {
   const [activeView, setActiveView] = useState('trainer')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [profile, setProfile] = useState(() => readSavedProfile())
+  const [setupStep, setSetupStep] = useState(() => {
+    if (typeof window === 'undefined') return 0
+    const saved = Number(window.localStorage.getItem(SETUP_STEP_STORAGE_KEY))
+    if (!Number.isFinite(saved)) return 0
+    return Math.min(3, Math.max(0, Math.floor(saved)))
+  })
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'maschio'
     const saved = window.localStorage.getItem('ginnastica.theme')
@@ -381,6 +417,16 @@ export default function App() {
     window.localStorage.setItem('ginnastica.theme', theme)
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
+  }, [profile])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(SETUP_STEP_STORAGE_KEY, String(setupStep))
+  }, [setupStep])
 
   useEffect(() => {
     const levelKeys = Object.keys(levels)
@@ -631,6 +677,13 @@ export default function App() {
     URL.revokeObjectURL(url)
   }
 
+  const updateProfileField = useCallback((field, value) => {
+    setProfile((prev) => ({ ...prev, [field]: value }))
+  }, [])
+
+  const setupStepLabels = ['Profilo', 'Training', 'Livello', 'Programma']
+  const isProgramStep = setupStep >= 3
+
   return (
     <main className="layout compact-layout">
       {showSplash ? (
@@ -653,7 +706,7 @@ export default function App() {
           <div className="brand-logo-shell">
             <img src={logoSrc} alt="Sport" className="brand-logo-img" />
           </div>
-          <h1>Trainer</h1>
+          <h1>Personal Trainer</h1>
           <div className="burger-wrap">
             <button type="button" className="burger-btn" aria-label="Apri menu sezioni" onClick={() => setMenuOpen((v) => !v)}>☰</button>
             {menuOpen ? (
