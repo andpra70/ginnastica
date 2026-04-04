@@ -162,6 +162,7 @@ function clampRange(value, min, max) {
 function pickSpeechVoice(voices, gender) {
   if (!Array.isArray(voices) || !voices.length) return null
   const italian = voices.filter((voice) => /(^it[-_]|ital)/i.test(`${voice.lang || ''} ${voice.name || ''}`))
+  if (!italian.length) return null
   const femaleHints = /(female|woman|fem|minnie|chiara|alice|elsa|sara|paola|lucia|giulia)/i
   const maleHints = /(male|man|mas|luca|marco|giorgio|paolo|roberto|federico|diego|giovanni|francesco|antonio|google italiano)/i
   const preferredHints = gender === 'maschio' ? maleHints : femaleHints
@@ -172,11 +173,8 @@ function pickSpeechVoice(voices, gender) {
 
   return (
     matchByHints(italian)
-    || matchByHints(voices)
     || matchAvoidOpposite(italian)
-    || matchAvoidOpposite(voices)
     || italian[0]
-    || voices[0]
     || null
   )
 }
@@ -709,6 +707,7 @@ export default function App() {
   const googleButtonHostRef = useRef(null)
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
   const [googleLoginError, setGoogleLoginError] = useState('')
+  const speakingTokenRef = useRef(0)
 
   const isEditMode = getEditMode()
   const googleEnabled = useMemo(() => parseGoogleFlagFromUrl(), [])
@@ -1172,18 +1171,35 @@ export default function App() {
     if (!voiceEnabled) return
     const synth = window.speechSynthesis
     const utterance = new SpeechSynthesisUtterance('voce attiva')
-    const selectedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
-    if (selectedVoice) {
-      utterance.voice = selectedVoice
-      utterance.lang = selectedVoice.lang || 'it-IT'
-    } else {
+    const speakWithVoice = (voice) => {
       utterance.lang = 'it-IT'
+      if (voice) utterance.voice = voice
+      utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
+      utterance.rate = 1
+      utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
+      synth.cancel()
+      synth.speak(utterance)
     }
-    utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
-    utterance.rate = 1
-    utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
-    synth.cancel()
-    synth.speak(utterance)
+    const directVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+    if (directVoice) {
+      speakWithVoice(directVoice)
+      return
+    }
+    const token = Date.now()
+    speakingTokenRef.current = token
+    const onVoicesChanged = () => {
+      if (speakingTokenRef.current !== token) return
+      synth.removeEventListener('voiceschanged', onVoicesChanged)
+      const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+      speakWithVoice(delayedVoice)
+    }
+    synth.addEventListener('voiceschanged', onVoicesChanged)
+    window.setTimeout(() => {
+      if (speakingTokenRef.current !== token) return
+      synth.removeEventListener('voiceschanged', onVoicesChanged)
+      const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+      speakWithVoice(delayedVoice)
+    }, 600)
   }, [voiceEnabled, voiceGender, voiceVolumePct])
 
   const ensureClockAudioReady = useCallback(async () => {
@@ -1303,18 +1319,39 @@ export default function App() {
     if (!text) return
     const synth = window.speechSynthesis
     const utterance = new SpeechSynthesisUtterance(text)
-    const selectedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
-    if (selectedVoice) {
-      utterance.voice = selectedVoice
-      utterance.lang = selectedVoice.lang || 'it-IT'
-    } else {
+    const speakWithVoice = (voice) => {
       utterance.lang = 'it-IT'
+      if (voice) utterance.voice = voice
+      utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
+      utterance.rate = 1
+      utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
+      synth.cancel()
+      synth.speak(utterance)
     }
-    utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
-    utterance.rate = 1
-    utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
-    synth.cancel()
-    synth.speak(utterance)
+    const directVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+    if (directVoice) {
+      speakWithVoice(directVoice)
+      return
+    }
+    const token = Date.now()
+    speakingTokenRef.current = token
+    const onVoicesChanged = () => {
+      if (speakingTokenRef.current !== token) return
+      synth.removeEventListener('voiceschanged', onVoicesChanged)
+      const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+      speakWithVoice(delayedVoice)
+    }
+    synth.addEventListener('voiceschanged', onVoicesChanged)
+    const timeoutId = window.setTimeout(() => {
+      if (speakingTokenRef.current !== token) return
+      synth.removeEventListener('voiceschanged', onVoicesChanged)
+      const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+      speakWithVoice(delayedVoice)
+    }, 600)
+    return () => {
+      synth.removeEventListener('voiceschanged', onVoicesChanged)
+      window.clearTimeout(timeoutId)
+    }
   }, [
     playMode,
     playRunning,
