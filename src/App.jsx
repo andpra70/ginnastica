@@ -17,8 +17,68 @@ const TRAINING_CONFIGS = {
   }
 }
 
+const STORAGE_ROOT_KEY = 'ginnastica'
 const PROFILE_STORAGE_KEY = 'ginnastica.profile'
 const WORKOUT_HISTORY_STORAGE_KEY = 'ginnastica.workout.history'
+
+function readAppStorage() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(STORAGE_ROOT_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeAppStorage(next) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(STORAGE_ROOT_KEY, JSON.stringify(next))
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function getStoredValue(key) {
+  const root = readAppStorage()
+  return Object.prototype.hasOwnProperty.call(root, key) ? root[key] : null
+}
+
+function setStoredValue(key, value) {
+  const root = readAppStorage()
+  root[key] = value
+  writeAppStorage(root)
+}
+
+function parseGoogleFlagFromUrl() {
+  if (typeof window === 'undefined') return false
+  const raw = new URLSearchParams(window.location.search).get('google')
+  if (raw == null) return false
+  const normalized = String(raw).trim().toLowerCase()
+  return ['1', 'true', 'on', 'yes'].includes(normalized)
+}
+
+function parseJwtPayload(token) {
+  try {
+    const payload = String(token || '').split('.')[1]
+    if (!payload) return null
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    const json = decodeURIComponent(
+      atob(padded)
+        .split('')
+        .map((char) => `%${(`00${char.charCodeAt(0).toString(16)}`).slice(-2)}`)
+        .join('')
+    )
+    const parsed = JSON.parse(json)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch {
+    return null
+  }
+}
 
 function getTodayDateInputValue() {
   const now = new Date()
@@ -180,7 +240,8 @@ function getProgramStorageKey(trainingKey) {
 function readSavedProgram(trainingKey) {
   if (typeof window === 'undefined') return null
   try {
-    const raw = window.localStorage.getItem(getProgramStorageKey(trainingKey))
+    const rawFromRoot = getStoredValue(getProgramStorageKey(trainingKey))
+    const raw = (typeof rawFromRoot === 'string' ? rawFromRoot : null)
       || (trainingKey === 'calistenichs' ? window.localStorage.getItem('ginnastica.program.json') : null)
     if (!raw) return null
     const parsed = JSON.parse(raw)
@@ -236,7 +297,9 @@ function getSavedVideoSegment(card, defaultVideoUrl) {
   }
   if (typeof window === 'undefined') return { url: defaultVideoUrl, start: 0, end: 20 }
   try {
-    const raw = window.localStorage.getItem(`ginnastica.videoLoop.${card?.id}`)
+    const storageKey = `ginnastica.videoLoop.${card?.id}`
+    const rawFromRoot = getStoredValue(storageKey)
+    const raw = (typeof rawFromRoot === 'string' ? rawFromRoot : null) || window.localStorage.getItem(storageKey)
     if (!raw) return { url: defaultVideoUrl, start: 0, end: 20 }
     const parsed = JSON.parse(raw)
     const start = Number.isFinite(Number(parsed.start)) ? Number(parsed.start) : 0
@@ -257,7 +320,9 @@ function getSavedCameraView(cardId, storedCameraViews = {}) {
   if (typeof window === 'undefined') return null
 
   try {
-    const legacyByCardRaw = window.localStorage.getItem(`ginnastica.camera.card.${cardId}`)
+    const storageKey = `ginnastica.camera.card.${cardId}`
+    const rawFromRoot = getStoredValue(storageKey)
+    const legacyByCardRaw = (typeof rawFromRoot === 'string' ? rawFromRoot : null) || window.localStorage.getItem(storageKey)
     if (legacyByCardRaw) {
       const legacyByCard = normalizeCameraView(JSON.parse(legacyByCardRaw))
       if (legacyByCard) return legacyByCard
@@ -282,7 +347,8 @@ function readSavedProfile() {
     }
   }
   try {
-    const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY)
+    const rawFromRoot = getStoredValue(PROFILE_STORAGE_KEY)
+    const raw = (typeof rawFromRoot === 'string' ? rawFromRoot : null) || window.localStorage.getItem(PROFILE_STORAGE_KEY)
     if (!raw) {
       return {
         nome: '',
@@ -320,7 +386,8 @@ function readSavedProfile() {
 function readSavedWorkoutHistory() {
   if (typeof window === 'undefined') return []
   try {
-    const raw = window.localStorage.getItem(WORKOUT_HISTORY_STORAGE_KEY)
+    const rawFromRoot = getStoredValue(WORKOUT_HISTORY_STORAGE_KEY)
+    const raw = (typeof rawFromRoot === 'string' ? rawFromRoot : null) || window.localStorage.getItem(WORKOUT_HISTORY_STORAGE_KEY)
     if (!raw) return []
     return normalizeWorkoutHistory(JSON.parse(raw))
   } catch {
@@ -441,17 +508,17 @@ function ProgramCard({ card }) {
 }
 
 export default function App() {
-  const [activeView, setActiveView] = useState('training')
+  const [activeView, setActiveView] = useState('profile')
   const [menuOpen, setMenuOpen] = useState(false)
   const [profile, setProfile] = useState(() => readSavedProfile())
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'maschio'
-    const saved = window.localStorage.getItem('ginnastica.theme')
+    const saved = getStoredValue('ginnastica.theme')
     return saved === 'femmina' ? 'femmina' : 'maschio'
   })
   const [trainingKey, setTrainingKey] = useState(() => {
     if (typeof window === 'undefined') return 'calistenichs'
-    const saved = window.localStorage.getItem('ginnastica.training.key')
+    const saved = getStoredValue('ginnastica.training.key')
     return TRAINING_CONFIGS[saved] ? saved : 'calistenichs'
   })
   const [level, setLevel] = useState('base')
@@ -471,8 +538,13 @@ export default function App() {
   const [selectedHistoryEventId, setSelectedHistoryEventId] = useState(null)
   const weightChartRef = useRef(null)
   const activeWorkoutSessionRef = useRef(null)
+  const googleButtonHostRef = useRef(null)
+  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
+  const [googleLoginError, setGoogleLoginError] = useState('')
 
   const isEditMode = getEditMode()
+  const googleEnabled = useMemo(() => parseGoogleFlagFromUrl(), [])
+  const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim()
   const iconBase = `${import.meta.env.BASE_URL}icons`
   const logoSrc = `${import.meta.env.BASE_URL}logone.png`
   const sectionIcons = {
@@ -509,9 +581,7 @@ export default function App() {
   const latestClipByCardRef = useRef({})
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('ginnastica.training.key', trainingKey)
-    }
+    setStoredValue('ginnastica.training.key', trainingKey)
 
     const savedProgram = readSavedProgram(trainingKey)
     const saved = savedProgram ? cardsFromAllenamento(savedProgram?.allenamento, savedProgram) : null
@@ -527,20 +597,97 @@ export default function App() {
   }, [trainingKey, allCfg, appConfig.videoSources])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem('ginnastica.theme', theme)
+    setStoredValue('ginnastica.theme', theme)
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
+    setStoredValue(PROFILE_STORAGE_KEY, JSON.stringify(profile))
   }, [profile])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(WORKOUT_HISTORY_STORAGE_KEY, JSON.stringify(workoutHistory))
+    setStoredValue(WORKOUT_HISTORY_STORAGE_KEY, JSON.stringify(workoutHistory))
   }, [workoutHistory])
+
+  useEffect(() => {
+    if (!googleEnabled) return
+    if (!googleClientId) {
+      setGoogleLoginError('Google login attivo ma VITE_GOOGLE_CLIENT_ID non configurato.')
+      return
+    }
+
+    if (window.google?.accounts?.id) {
+      setGoogleScriptLoaded(true)
+      return
+    }
+
+    let cancelled = false
+    const selector = 'script[data-google-identity="1"]'
+    const existing = document.querySelector(selector)
+    const onLoad = () => {
+      if (cancelled) return
+      setGoogleScriptLoaded(true)
+    }
+    const onError = () => {
+      if (cancelled) return
+      setGoogleLoginError('Impossibile caricare Google Identity Services.')
+    }
+
+    if (existing) {
+      existing.addEventListener('load', onLoad)
+      existing.addEventListener('error', onError)
+      return () => {
+        cancelled = true
+        existing.removeEventListener('load', onLoad)
+        existing.removeEventListener('error', onError)
+      }
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.setAttribute('data-google-identity', '1')
+    script.addEventListener('load', onLoad)
+    script.addEventListener('error', onError)
+    document.head.appendChild(script)
+
+    return () => {
+      cancelled = true
+      script.removeEventListener('load', onLoad)
+      script.removeEventListener('error', onError)
+    }
+  }, [googleEnabled, googleClientId])
+
+  useEffect(() => {
+    if (!googleEnabled || !googleScriptLoaded || !googleClientId) return
+    const host = googleButtonHostRef.current
+    if (!host) return
+    if (!window.google?.accounts?.id) return
+
+    host.innerHTML = ''
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: (response) => {
+        const payload = parseJwtPayload(response?.credential)
+        if (!payload) return
+        setProfile((prev) => ({
+          ...prev,
+          alias: payload.name || prev.alias,
+          nome: payload.given_name || prev.nome,
+          cognome: payload.family_name || prev.cognome,
+          email: payload.email || prev.email
+        }))
+      }
+    })
+    window.google.accounts.id.renderButton(host, {
+      theme: 'outline',
+      size: 'large',
+      text: 'signin_with',
+      shape: 'rectangular',
+      logo_alignment: 'left'
+    })
+  }, [googleEnabled, googleScriptLoaded, googleClientId])
 
   useEffect(() => {
     const levelKeys = Object.keys(levels)
@@ -810,7 +957,7 @@ export default function App() {
       ...toExportProgram(exportCards, levels, videoSources || [])
     }
     setProgramCardsBase(exportCards)
-    localStorage.setItem(getProgramStorageKey(trainingKey), JSON.stringify(payload))
+    setStoredValue(getProgramStorageKey(trainingKey), JSON.stringify(payload))
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -1059,7 +1206,15 @@ export default function App() {
 
       {activeView === 'profile' ? (
         <section className="panel compact-panel setup-panel">
-          <h3 className="section-heading"><img src={sectionIcons.profile} alt="" className="section-icon-lg" />Profilo</h3>
+          <div className="section-heading-row">
+            <h3 className="section-heading"><img src={sectionIcons.profile} alt="" className="section-icon-lg" />Profilo</h3>
+            {googleEnabled ? (
+              <div className="google-login-wrap">
+                <div ref={googleButtonHostRef} />
+              </div>
+            ) : null}
+          </div>
+          {googleEnabled && googleLoginError ? <p className="hint">{googleLoginError}</p> : null}
           <div className="editor-grid">
             <label>Alias<input value={profile.alias} onChange={(e) => updateProfileField('alias', e.target.value)} /></label>
             <label>Nome<input value={profile.nome} onChange={(e) => updateProfileField('nome', e.target.value)} /></label>

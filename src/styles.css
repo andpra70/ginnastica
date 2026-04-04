@@ -875,6 +875,13 @@ input[type='range'] {
   gap: 0.5rem;
 }
 
+.section-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
 .section-icon-lg {
   width: 28px;
   height: 28px;
@@ -1299,6 +1306,24 @@ input[type='range'] {
   border: 1px solid #d0dceb;
   background: #f6f9fd;
   padding: 0.62rem;
+}
+
+.google-login-wrap {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+  justify-content: end;
+}
+
+@media (max-width: 720px) {
+  .section-heading-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .google-login-wrap {
+    justify-content: start;
+  }
 }
 
 .weight-panel h4 {

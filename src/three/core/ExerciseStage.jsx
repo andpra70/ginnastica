@@ -15,6 +15,36 @@ const DEFAULT_STAGE_CONFIG = {
   }
 }
 
+const STORAGE_ROOT_KEY = 'ginnastica'
+
+function readAppStorage() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(STORAGE_ROOT_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function getStoredValue(key) {
+  const root = readAppStorage()
+  return Object.prototype.hasOwnProperty.call(root, key) ? root[key] : null
+}
+
+function setStoredValue(key, value) {
+  if (typeof window === 'undefined') return
+  const root = readAppStorage()
+  root[key] = value
+  try {
+    window.localStorage.setItem(STORAGE_ROOT_KEY, JSON.stringify(root))
+  } catch {
+    // ignore storage errors
+  }
+}
+
 function normalizeView(raw) {
   if (!raw || typeof raw !== 'object') return null
   const camera = Array.isArray(raw.camera) ? raw.camera.map(Number) : null
@@ -167,7 +197,9 @@ export default function ExerciseStage({
     if (typeof window === 'undefined') return null
 
     try {
-      const scopedRaw = window.localStorage.getItem(scopedStorageKey)
+      const scopedRawFromRoot = getStoredValue(scopedStorageKey)
+      const scopedRaw = (typeof scopedRawFromRoot === 'string' ? scopedRawFromRoot : null)
+        || window.localStorage.getItem(scopedStorageKey)
       if (scopedRaw) {
         const scoped = normalizeView(JSON.parse(scopedRaw))
         if (scoped) return scoped
@@ -216,8 +248,8 @@ export default function ExerciseStage({
     }
 
     try {
-      localStorage.setItem(scopedStorageKey, JSON.stringify(payload))
-      localStorage.setItem('ginnastica.camera.last', JSON.stringify(payload))
+      setStoredValue(scopedStorageKey, JSON.stringify(payload))
+      setStoredValue('ginnastica.camera.last', JSON.stringify(payload))
     } catch {
       // Ignore storage errors (e.g. privacy mode)
     }

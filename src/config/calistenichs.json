@@ -80,7 +80,7 @@
         "breathing": "Inspiro dal naso, espiro dalla bocca in modo regolare.",
         "viewerType": "3d",
         "classKey": "warmup",
-        "clipName": "Take 001",
+        "clipName": "mixamo.com",
         "videoSegment": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
@@ -88,17 +88,17 @@
         },
         "cameraView": {
           "camera": [
-            -7.293,
-            4.802,
-            10.206
+            7.815,
+            -2.643,
+            6.06
           ],
           "target": [
-            2.342,
-            0.14,
-            0.138
+            0.237,
+            -3.855,
+            -0.428
           ]
         },
-        "modelAsset": "/assets3d/actors/sofia/sofia.fbx"
+        "modelAsset": "/assets3d/actors/man2/man2.fbx"
       },
       {
         "id": "warmup-core",
@@ -543,7 +543,7 @@
         "breathing": "Inspiro dal naso, espiro dalla bocca in modo regolare.",
         "viewerType": "3d",
         "classKey": "warmup",
-        "clipName": "Take 001",
+        "clipName": "mixamo.com",
         "videoSegment": {
           "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
           "start": 0,
@@ -551,17 +551,17 @@
         },
         "cameraView": {
           "camera": [
-            -7.293,
-            4.802,
-            10.206
+            7.815,
+            -2.643,
+            6.06
           ],
           "target": [
-            2.342,
-            0.14,
-            0.138
+            0.237,
+            -3.855,
+            -0.428
           ]
         },
-        "modelAsset": "/assets3d/actors/sofia/sofia.fbx"
+        "modelAsset": "/assets3d/actors/man2/man2.fbx"
       },
       {
         "id": "warmup-core",
