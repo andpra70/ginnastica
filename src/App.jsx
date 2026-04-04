@@ -649,16 +649,22 @@ export default function App() {
     return clampRange(Number(rawStored), 0, 100)
   })
   const [voiceSpeakExecution, setVoiceSpeakExecution] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return getStoredValue('ginnastica.settings.voiceSpeakExecution') === '1'
+    if (typeof window === 'undefined') return true
+    const raw = getStoredValue('ginnastica.settings.voiceSpeakExecution')
+    if (raw == null || raw === '') return true
+    return raw === '1'
   })
   const [voiceSpeakBreathing, setVoiceSpeakBreathing] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return getStoredValue('ginnastica.settings.voiceSpeakBreathing') === '1'
+    if (typeof window === 'undefined') return true
+    const raw = getStoredValue('ginnastica.settings.voiceSpeakBreathing')
+    if (raw == null || raw === '') return true
+    return raw === '1'
   })
   const [voiceSpeakErrors, setVoiceSpeakErrors] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return getStoredValue('ginnastica.settings.voiceSpeakErrors') === '1'
+    if (typeof window === 'undefined') return true
+    const raw = getStoredValue('ginnastica.settings.voiceSpeakErrors')
+    if (raw == null || raw === '') return true
+    return raw === '1'
   })
   const [level, setLevel] = useState('base')
   const [playMode, setPlayMode] = useState(false)
