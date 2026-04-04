@@ -473,8 +473,16 @@ export default function App() {
   const activeWorkoutSessionRef = useRef(null)
 
   const isEditMode = getEditMode()
-  const logoSrc = `${import.meta.env.BASE_URL}decathlon.svg`
-  const splashImageSrc = `${import.meta.env.BASE_URL}sports-icons-vector.jpg`
+  const iconBase = `${import.meta.env.BASE_URL}icons`
+  const logoSrc = `${import.meta.env.BASE_URL}logone.png`
+  const sectionIcons = {
+    profile: `${iconBase}/profile.png`,
+    setup: `${iconBase}/setup.png`,
+    training: `${iconBase}/training.png`,
+    history: `${iconBase}/history.png`,
+    results: `${iconBase}/results.png`
+  }
+  const splashImageSrc = `${import.meta.env.BASE_URL}splash.png`
 
   const appConfig = TRAINING_CONFIGS[trainingKey]?.config || calistenichsConfig
   const trainingLabel = TRAINING_CONFIGS[trainingKey]?.label || trainingKey
@@ -1023,11 +1031,26 @@ export default function App() {
             <button type="button" className="burger-btn" aria-label="Apri menu sezioni" onClick={() => setMenuOpen((v) => !v)}>☰</button>
             {menuOpen ? (
               <div className="burger-menu">
-                <button type="button" className={activeView === 'profile' ? 'active' : ''} onClick={() => { setActiveView('profile'); setMenuOpen(false) }}>Profilo</button>
-                <button type="button" className={activeView === 'setup' ? 'active' : ''} onClick={() => { setActiveView('setup'); setMenuOpen(false) }}>Configurazione</button>
-                <button type="button" className={activeView === 'training' ? 'active' : ''} onClick={() => { setActiveView('training'); setMenuOpen(false) }}>{`Training: ${trainingLabel}`}</button>
-                <button type="button" className={activeView === 'history' ? 'active' : ''} onClick={() => { setActiveView('history'); setMenuOpen(false) }}>Storico</button>
-                <button type="button" className={activeView === 'results' ? 'active' : ''} onClick={() => { setActiveView('results'); setMenuOpen(false) }}>Risultati</button>
+                <button type="button" className={activeView === 'profile' ? 'active' : ''} onClick={() => { setActiveView('profile'); setMenuOpen(false) }}>
+                  <img src={sectionIcons.profile} alt="" className="burger-icon" />
+                  <span>Profilo</span>
+                </button>
+                <button type="button" className={activeView === 'setup' ? 'active' : ''} onClick={() => { setActiveView('setup'); setMenuOpen(false) }}>
+                  <img src={sectionIcons.setup} alt="" className="burger-icon" />
+                  <span>Configurazione</span>
+                </button>
+                <button type="button" className={activeView === 'training' ? 'active' : ''} onClick={() => { setActiveView('training'); setMenuOpen(false) }}>
+                  <img src={sectionIcons.training} alt="" className="burger-icon" />
+                  <span>{`Training: ${trainingLabel}`}</span>
+                </button>
+                <button type="button" className={activeView === 'history' ? 'active' : ''} onClick={() => { setActiveView('history'); setMenuOpen(false) }}>
+                  <img src={sectionIcons.history} alt="" className="burger-icon" />
+                  <span>Storico</span>
+                </button>
+                <button type="button" className={activeView === 'results' ? 'active' : ''} onClick={() => { setActiveView('results'); setMenuOpen(false) }}>
+                  <img src={sectionIcons.results} alt="" className="burger-icon" />
+                  <span>Risultati</span>
+                </button>
               </div>
             ) : null}
           </div>
@@ -1036,7 +1059,7 @@ export default function App() {
 
       {activeView === 'profile' ? (
         <section className="panel compact-panel setup-panel">
-          <h3>Profilo</h3>
+          <h3 className="section-heading"><img src={sectionIcons.profile} alt="" className="section-icon-lg" />Profilo</h3>
           <div className="editor-grid">
             <label>Alias<input value={profile.alias} onChange={(e) => updateProfileField('alias', e.target.value)} /></label>
             <label>Nome<input value={profile.nome} onChange={(e) => updateProfileField('nome', e.target.value)} /></label>
@@ -1084,7 +1107,7 @@ export default function App() {
 
       {activeView === 'setup' ? (
         <section className="panel compact-panel setup-panel">
-          <h3>Configurazione Training e Livello</h3>
+          <h3 className="section-heading"><img src={sectionIcons.setup} alt="" className="section-icon-lg" />Configurazione Training e Livello</h3>
           <div className="editor-grid">
             <label>
               Training
@@ -1108,6 +1131,9 @@ export default function App() {
 
       {activeView === 'training' ? (
         <>
+              <section className="panel compact-panel setup-panel">
+                <h3 className="section-heading"><img src={sectionIcons.training} alt="" className="section-icon-lg" />{`Training: ${trainingLabel}`}</h3>
+              </section>
               <section className="timer-strip">
                 <div className="timer-metrics">
                   <div><strong>Training:</strong> {trainingLabel}</div>
@@ -1273,7 +1299,7 @@ export default function App() {
 
       {activeView === 'history' ? (
         <section className="panel compact-panel setup-panel">
-          <h3>Storico Allenamenti</h3>
+          <h3 className="section-heading"><img src={sectionIcons.history} alt="" className="section-icon-lg" />Storico Allenamenti</h3>
           <div className="history-calendar-head">
             <button
               type="button"
@@ -1348,7 +1374,7 @@ export default function App() {
 
       {activeView === 'results' ? (
         <section className="panel compact-panel setup-panel">
-          <h3>Risultati</h3>
+          <h3 className="section-heading"><img src={sectionIcons.results} alt="" className="section-icon-lg" />Risultati</h3>
           {latestWeight ? (
             <p className="hint">{`Ultimo peso: ${latestWeight.weight} kg (${latestWeight.date})`}</p>
           ) : (
