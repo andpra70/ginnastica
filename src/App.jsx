@@ -17,7 +17,6 @@ const TRAINING_CONFIGS = {
 }
 
 const PROFILE_STORAGE_KEY = 'ginnastica.profile'
-const SETUP_STEP_STORAGE_KEY = 'ginnastica.setup.step'
 
 function formatTime(totalSeconds) {
   const value = Math.max(0, Math.floor(totalSeconds))
@@ -238,6 +237,8 @@ function readSavedProfile() {
   }
 }
 
+const APP_SECTIONS = ['profile', 'setup', 'training']
+
 function CardViewer({ card }) {
   const handleVideoSegmentChange = useCallback(
     (segment) => card.onVideoSegmentChange?.(card.id, segment),
@@ -340,15 +341,9 @@ function ProgramCard({ card }) {
 }
 
 export default function App() {
-  const [activeView, setActiveView] = useState('trainer')
+  const [activeView, setActiveView] = useState('training')
   const [menuOpen, setMenuOpen] = useState(false)
   const [profile, setProfile] = useState(() => readSavedProfile())
-  const [setupStep, setSetupStep] = useState(() => {
-    if (typeof window === 'undefined') return 0
-    const saved = Number(window.localStorage.getItem(SETUP_STEP_STORAGE_KEY))
-    if (!Number.isFinite(saved)) return 0
-    return Math.min(3, Math.max(0, Math.floor(saved)))
-  })
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'maschio'
     const saved = window.localStorage.getItem('ginnastica.theme')
@@ -422,11 +417,6 @@ export default function App() {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
   }, [profile])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(SETUP_STEP_STORAGE_KEY, String(setupStep))
-  }, [setupStep])
 
   useEffect(() => {
     const levelKeys = Object.keys(levels)
@@ -679,10 +669,23 @@ export default function App() {
 
   const updateProfileField = useCallback((field, value) => {
     setProfile((prev) => ({ ...prev, [field]: value }))
+    if (field === 'sesso') {
+      if (value === 'maschio') setTheme('maschio')
+      if (value === 'femmina') setTheme('femmina')
+    }
   }, [])
 
-  const setupStepLabels = ['Profilo', 'Training', 'Livello', 'Programma']
-  const isProgramStep = setupStep >= 3
+  const sectionIndex = APP_SECTIONS.indexOf(activeView)
+  const canGoPrev = sectionIndex > 0
+  const canGoNext = sectionIndex >= 0 && sectionIndex < APP_SECTIONS.length - 1
+  const goPrevSection = useCallback(() => {
+    if (!canGoPrev) return
+    setActiveView(APP_SECTIONS[sectionIndex - 1])
+  }, [canGoPrev, sectionIndex])
+  const goNextSection = useCallback(() => {
+    if (!canGoNext) return
+    setActiveView(APP_SECTIONS[sectionIndex + 1])
+  }, [canGoNext, sectionIndex])
 
   return (
     <main className="layout compact-layout">
@@ -711,35 +714,9 @@ export default function App() {
             <button type="button" className="burger-btn" aria-label="Apri menu sezioni" onClick={() => setMenuOpen((v) => !v)}>☰</button>
             {menuOpen ? (
               <div className="burger-menu">
-                <button type="button" className={activeView === 'trainer' ? 'active' : ''} onClick={() => { setActiveView('trainer'); setMenuOpen(false) }}>Trainer</button>
                 <button type="button" className={activeView === 'profile' ? 'active' : ''} onClick={() => { setActiveView('profile'); setMenuOpen(false) }}>Profilo</button>
-                {activeView === 'trainer' ? (
-                  <label className="burger-level">
-                    Training
-                    <select value={trainingKey} onChange={(e) => setTrainingKey(e.target.value)}>
-                      {Object.entries(TRAINING_CONFIGS).map(([key, value]) => (
-                        <option key={key} value={key}>{value.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                ) : null}
-                {activeView === 'trainer' ? (
-                  <label className="burger-level">
-                    Livello
-                    <select value={level} onChange={(e) => setLevel(e.target.value)}>
-                      {Object.entries(levels).map(([key, value]) => (
-                        <option key={key} value={key}>{value.label || key}</option>
-                      ))}
-                    </select>
-                  </label>
-                ) : null}
-                <label className="burger-level">
-                  Tema
-                  <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-                    <option value="maschio">Maschio</option>
-                    <option value="femmina">Femmina</option>
-                  </select>
-                </label>
+                <button type="button" className={activeView === 'setup' ? 'active' : ''} onClick={() => { setActiveView('setup'); setMenuOpen(false) }}>Configurazione</button>
+                <button type="button" className={activeView === 'training' ? 'active' : ''} onClick={() => { setActiveView('training'); setMenuOpen(false) }}>{`Training: ${trainingLabel}`}</button>
               </div>
             ) : null}
           </div>
@@ -766,67 +743,32 @@ export default function App() {
         </section>
       ) : null}
 
-      {activeView === 'trainer' ? (
+      {activeView === 'setup' ? (
+        <section className="panel compact-panel setup-panel">
+          <h3>Configurazione Training e Livello</h3>
+          <div className="editor-grid">
+            <label>
+              Training
+              <select value={trainingKey} onChange={(e) => setTrainingKey(e.target.value)}>
+                {Object.entries(TRAINING_CONFIGS).map(([key, value]) => (
+                  <option key={key} value={key}>{value.label}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Livello
+              <select value={level} onChange={(e) => setLevel(e.target.value)}>
+                {Object.entries(levels).map(([key, value]) => (
+                  <option key={key} value={key}>{value.label || key}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+      ) : null}
+
+      {activeView === 'training' ? (
         <>
-          {!isProgramStep ? (
-            <section className="panel compact-panel setup-panel">
-              <h3>{setupStepLabels[setupStep] || 'Setup'}</h3>
-              <p className="hint">Step {setupStep + 1} di 4</p>
-
-              {setupStep === 0 ? (
-                <div className="editor-grid">
-                  <label>Nome<input value={profile.nome} onChange={(e) => updateProfileField('nome', e.target.value)} /></label>
-                  <label>Cognome<input value={profile.cognome} onChange={(e) => updateProfileField('cognome', e.target.value)} /></label>
-                  <label>Alias<input value={profile.alias} onChange={(e) => updateProfileField('alias', e.target.value)} /></label>
-                  <label>Email<input type="email" value={profile.email} onChange={(e) => updateProfileField('email', e.target.value)} /></label>
-                  <label>
-                    Sesso
-                    <select value={profile.sesso} onChange={(e) => updateProfileField('sesso', e.target.value)}>
-                      <option value="maschio">Maschio</option>
-                      <option value="femmina">Femmina</option>
-                      <option value="altro">Altro</option>
-                    </select>
-                  </label>
-                </div>
-              ) : null}
-
-              {setupStep === 1 ? (
-                <div className="editor-grid">
-                  <label>
-                    Training
-                    <select value={trainingKey} onChange={(e) => setTrainingKey(e.target.value)}>
-                      {Object.entries(TRAINING_CONFIGS).map(([key, value]) => (
-                        <option key={key} value={key}>{value.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              ) : null}
-
-              {setupStep === 2 ? (
-                <div className="editor-grid">
-                  <label>
-                    Livello
-                    <select value={level} onChange={(e) => setLevel(e.target.value)}>
-                      {Object.entries(levels).map(([key, value]) => (
-                        <option key={key} value={key}>{value.label || key}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              ) : null}
-
-              <div className="setup-nav">
-                <button type="button" disabled={setupStep <= 0} onClick={() => setSetupStep((step) => Math.max(0, step - 1))}>
-                  Precedente
-                </button>
-                <button type="button" onClick={() => setSetupStep((step) => Math.min(3, step + 1))}>
-                  {setupStep >= 2 ? 'Vai al Programma' : 'Avanti'}
-                </button>
-              </div>
-            </section>
-          ) : (
-            <>
               <section className="timer-strip">
                 <div className="timer-metrics">
                   <div><strong>Training:</strong> {trainingLabel}</div>
@@ -984,10 +926,15 @@ export default function App() {
                   </div>
                 </section>
               ) : null}
-            </>
-          )}
         </>
       ) : null}
+
+      <section className="panel compact-panel setup-panel">
+        <div className="setup-nav">
+          <button type="button" disabled={!canGoPrev} onClick={goPrevSection}>Indietro</button>
+          <button type="button" disabled={!canGoNext} onClick={goNextSection}>Avanti</button>
+        </div>
+      </section>
 
     </main>
   )
