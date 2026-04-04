@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import * as d3 from 'd3'
 import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
 import calistenichsConfig from './config/calistenichs.json'
@@ -409,6 +410,7 @@ export default function App() {
   const [currentRemaining, setCurrentRemaining] = useState(0)
   const [weightEntryDate, setWeightEntryDate] = useState(() => getTodayDateInputValue())
   const [weightEntryValue, setWeightEntryValue] = useState('')
+  const weightChartRef = useRef(null)
 
   const isEditMode = getEditMode()
   const logoSrc = `${import.meta.env.BASE_URL}decathlon.svg`
@@ -760,6 +762,104 @@ export default function App() {
     setProfile((prev) => ({ ...prev, pesoHistory: normalizeWeightHistory(prev.pesoHistory).filter((row) => row.date !== date) }))
   }, [])
 
+  useEffect(() => {
+    if (activeView !== 'results') return
+    const svgEl = weightChartRef.current
+    if (!svgEl) return
+
+    const svg = d3.select(svgEl)
+    svg.selectAll('*').remove()
+    if (sortedWeightHistory.length < 2) return
+
+    const width = Math.max(320, svgEl.clientWidth || 320)
+    const height = Math.max(220, svgEl.clientHeight || 220)
+    const margin = { top: 18, right: 14, bottom: 34, left: 44 }
+    const plotWidth = width - margin.left - margin.right
+    const plotHeight = height - margin.top - margin.bottom
+
+    const minW = d3.min(sortedWeightHistory, (d) => d.weight) ?? 0
+    const maxW = d3.max(sortedWeightHistory, (d) => d.weight) ?? 1
+    const spread = Math.max(0.5, maxW - minW)
+    const yPadding = spread * 0.15
+    const yDomainMin = Math.max(0, minW - yPadding)
+    const yDomainMax = maxW + yPadding
+
+    const x = d3.scalePoint()
+      .domain(sortedWeightHistory.map((d) => d.date))
+      .range([margin.left, width - margin.right])
+
+    const y = d3.scaleLinear()
+      .domain([yDomainMin, yDomainMax])
+      .nice(4)
+      .range([height - margin.bottom, margin.top])
+
+    svg.attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'none')
+
+    const computedStyles = getComputedStyle(svgEl)
+    const chartColor = (computedStyles.getPropertyValue('--accent-2') || '#1e5a82').trim()
+    const gridColor = 'rgba(30, 90, 130, 0.25)'
+
+    const yAxis = d3.axisLeft(y).ticks(4).tickSize(-plotWidth)
+    const yGroup = svg.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(yAxis)
+    yGroup.selectAll('text').attr('font-size', 11)
+    yGroup.selectAll('line').attr('stroke', gridColor)
+    yGroup.selectAll('path').attr('stroke', gridColor)
+
+    svg.append('text')
+      .attr('x', margin.left)
+      .attr('y', margin.top - 6)
+      .attr('font-size', 11)
+      .attr('fill', chartColor)
+      .text('Peso (kg)')
+
+    const formatShortDate = (isoDate) => {
+      const [year, month, day] = String(isoDate).split('-')
+      if (!year || !month || !day) return isoDate
+      return `${day}/${month}`
+    }
+    const xTickDates = sortedWeightHistory.length <= 6
+      ? sortedWeightHistory.map((d) => d.date)
+      : [...new Set([
+        sortedWeightHistory[0]?.date,
+        sortedWeightHistory[Math.floor((sortedWeightHistory.length - 1) / 2)]?.date,
+        sortedWeightHistory[sortedWeightHistory.length - 1]?.date
+      ])].filter(Boolean)
+
+    const xAxis = d3.axisBottom(x)
+      .tickValues(xTickDates)
+      .tickFormat((d) => formatShortDate(d))
+    const xGroup = svg.append('g')
+      .attr('transform', `translate(0,${height - margin.bottom})`)
+      .call(xAxis)
+    xGroup.selectAll('text').attr('font-size', 11)
+    xGroup.selectAll('line').attr('stroke', gridColor)
+    xGroup.selectAll('path').attr('stroke', gridColor)
+
+    const line = d3.line()
+      .x((d) => x(d.date) ?? margin.left)
+      .y((d) => y(d.weight))
+
+    svg.append('path')
+      .datum(sortedWeightHistory)
+      .attr('fill', 'none')
+      .attr('stroke', chartColor)
+      .attr('stroke-width', 2)
+      .attr('d', line)
+
+    svg.append('g')
+      .selectAll('circle')
+      .data(sortedWeightHistory)
+      .enter()
+      .append('circle')
+      .attr('cx', (d) => x(d.date) ?? margin.left)
+      .attr('cy', (d) => y(d.weight))
+      .attr('r', 3)
+      .attr('fill', chartColor)
+  }, [sortedWeightHistory, activeView])
+
   return (
     <main className="layout compact-layout">
       {showSplash ? (
@@ -1041,62 +1141,7 @@ export default function App() {
           )}
           {sortedWeightHistory.length >= 2 ? (
             <div className="weight-chart-wrap">
-              <svg viewBox="0 0 120 70" preserveAspectRatio="none" className="weight-chart">
-                {(() => {
-                  const points = sortedWeightHistory
-                  const minW = Math.min(...points.map((p) => p.weight))
-                  const maxW = Math.max(...points.map((p) => p.weight))
-                  const spread = Math.max(0.001, maxW - minW)
-                  const plot = { left: 16, right: 114, top: 8, bottom: 52 }
-                  const xStep = points.length > 1 ? (plot.right - plot.left) / (points.length - 1) : 0
-                  const yTicks = 4
-                  const linePoints = points.map((p, i) => {
-                    const x = plot.left + i * xStep
-                    const y = plot.bottom - ((p.weight - minW) / spread) * (plot.bottom - plot.top)
-                    return { x, y, ...p }
-                  })
-                  const d = linePoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ')
-                  const dateLabelIndexes = points.length <= 6
-                    ? points.map((_, i) => i)
-                    : [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])]
-                  const formatShortDate = (isoDate) => {
-                    const [year, month, day] = String(isoDate).split('-')
-                    if (!year || !month || !day) return isoDate
-                    return `${day}/${month}`
-                  }
-                  return (
-                    <>
-                      <rect x="0" y="0" width="120" height="70" fill="transparent" />
-                      {Array.from({ length: yTicks + 1 }).map((_, idx) => {
-                        const ratio = idx / yTicks
-                        const y = plot.bottom - ratio * (plot.bottom - plot.top)
-                        const tickValue = (minW + ratio * spread).toFixed(1)
-                        return (
-                          <g key={`y-${tickValue}`}>
-                            <line x1={plot.left} y1={y} x2={plot.right} y2={y} stroke="currentColor" strokeOpacity="0.18" strokeWidth="0.4" />
-                            <text x={plot.left - 1.5} y={y + 0.9} textAnchor="end" fontSize="2.8" fill="currentColor">{tickValue}</text>
-                          </g>
-                        )
-                      })}
-                      <text x={2} y={plot.top - 1.5} textAnchor="start" fontSize="2.8" fill="currentColor">Peso (kg)</text>
-                      <line x1={plot.left} y1={plot.bottom} x2={plot.right} y2={plot.bottom} stroke="currentColor" strokeOpacity="0.35" strokeWidth="0.4" />
-                      <line x1={plot.left} y1={plot.top} x2={plot.left} y2={plot.bottom} stroke="currentColor" strokeOpacity="0.35" strokeWidth="0.4" />
-                      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.1" />
-                      {linePoints.map((p) => (
-                        <circle key={p.date} cx={p.x} cy={p.y} r="1.05" fill="currentColor" />
-                      ))}
-                      {dateLabelIndexes.map((idx) => {
-                        const p = linePoints[idx]
-                        return (
-                          <text key={`x-${p.date}`} x={p.x} y={plot.bottom + 6} textAnchor="middle" fontSize="2.8" fill="currentColor">
-                            {formatShortDate(p.date)}
-                          </text>
-                        )
-                      })}
-                    </>
-                  )
-                })()}
-              </svg>
+              <svg ref={weightChartRef} className="weight-chart" />
               <div className="weight-chart-legend">
                 {sortedWeightHistory.map((row) => (
                   <div key={`legend-${row.date}`} className="weight-chart-legend-item">
