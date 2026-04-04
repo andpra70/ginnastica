@@ -1133,6 +1133,24 @@ export default function App() {
     pulse(2450, t0 + 0.34, 0.09, 1.0)
   }, [clockEnabled, clockVolumePct])
 
+  const ensureClockAudioReady = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return
+    let ctx = clockAudioContextRef.current
+    if (!ctx) {
+      ctx = new AudioCtx()
+      clockAudioContextRef.current = ctx
+    }
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume()
+      } catch {
+        // ignore: browser may still block outside explicit user gesture
+      }
+    }
+  }, [])
+
   useEffect(() => {
     if (!playMode || !playRunning) return undefined
     const id = window.setInterval(() => {
@@ -1173,6 +1191,7 @@ export default function App() {
 
   const startPlay = () => {
     if (!programCards.length) return
+    ensureClockAudioReady()
     activeWorkoutSessionRef.current = {
       startMs: Date.now(),
       trainingKey,
