@@ -105,6 +105,11 @@
   background: #fff4fa !important;
 }
 
+[data-theme='femmina'] .setup-panel {
+  border-color: #e1c2d6 !important;
+  background: #fff4fa !important;
+}
+
 [data-theme='femmina'] .inline-video-editor {
   border-color: #e1c2d6;
   background: #fff4fa;
@@ -133,6 +138,12 @@
 [data-theme='femmina'] .grabber-actions button,
 [data-theme='femmina'] .grabber-download,
 [data-theme='femmina'] .fbx-debug-tools button {
+  border-color: #cf8ab0;
+  background: #fff0f8;
+  color: #612a4d;
+}
+
+[data-theme='femmina'] .setup-nav button {
   border-color: #cf8ab0;
   background: #fff0f8;
   color: #612a4d;
@@ -1163,6 +1174,12 @@ input[type='range'] {
   padding: 0.62rem !important;
 }
 
+.setup-panel {
+  border: 1px solid #d0dceb !important;
+  background: #f6f9fd !important;
+  padding: 0.62rem !important;
+}
+
 .editor-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -1198,6 +1215,27 @@ input[type='range'] {
 
 .editor-actions {
   margin-top: 0.35rem;
+}
+
+.setup-nav {
+  margin-top: 0.55rem;
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.setup-nav button {
+  border: 1px solid #86a8ca;
+  background: #fff;
+  border-radius: 0;
+  padding: 0.24rem 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.setup-nav button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .inline-video-editor {

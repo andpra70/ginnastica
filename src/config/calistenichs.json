@@ -88,16 +88,17 @@
         },
         "cameraView": {
           "camera": [
-            8.316,
-            -1.379,
-            7.559
+            9.869,
+            -3.453,
+            4.857
           ],
           "target": [
-            1.54,
-            -2.57,
-            1.201
+            0.007,
+            -3.779,
+            0.251
           ]
-        }
+        },
+        "modelAsset": "/assets3d/actors/man2/man2.fbx"
       },
       {
         "id": "warmup-core",
@@ -126,17 +127,18 @@
         },
         "cameraView": {
           "camera": [
-            8.005,
-            -2.298,
-            2.048
+            11.782,
+            -1.088,
+            -11.89
           ],
           "target": [
-            -2.174,
-            -3.927,
-            0.836
+            -0.49,
+            -0.873,
+            -0.512
           ]
         },
-        "clipName": "mixamo.com"
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/salsa_dancing/salsa_dancing.fbx"
       },
       {
         "id": "push-up-base",
@@ -203,17 +205,18 @@
         },
         "cameraView": {
           "camera": [
-            -16.309,
-            37.538,
-            15.152
+            -16.06,
+            10.838,
+            9.126
           ],
           "target": [
-            0,
-            0,
-            0
+            -5.363,
+            2.427,
+            0.844
           ]
         },
-        "clipName": "mixamo.com"
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/swing_dancing/swing_dancing.fbx"
       },
       {
         "id": "reverse-lunge",
@@ -242,17 +245,18 @@
         },
         "cameraView": {
           "camera": [
-            7.893,
-            -7.737,
-            7.731
+            21.399,
+            0.786,
+            4.083
           ],
           "target": [
-            -0.964,
-            -4.233,
-            -0.734
+            0,
+            0,
+            0
           ]
         },
-        "clipName": "mixamo.com"
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/swing_dancing1/swing_dancing1.fbx"
       },
       {
         "id": "mountain-climber",
@@ -281,16 +285,18 @@
         },
         "cameraView": {
           "camera": [
-            -198.012,
-            38.581,
-            172.903
+            -13.967,
+            -1.591,
+            11.986
           ],
           "target": [
             0,
-            90.116,
+            0,
             0
           ]
-        }
+        },
+        "modelAsset": "/assets3d/actors/woman/woman.fbx",
+        "clipName": "mixamo.com"
       },
       {
         "id": "jump-squat-controlled",
@@ -317,7 +323,20 @@
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "cameraView": {
+          "camera": [
+            8.263,
+            -0.703,
+            6.14
+          ],
+          "target": [
+            0.924,
+            -3.525,
+            0.572
+          ]
+        },
+        "modelAsset": "/assets3d/actors/man2/man2.fbx",
+        "clipName": "mixamo.com"
       },
       {
         "id": "dead-bug",
@@ -346,16 +365,18 @@
         },
         "cameraView": {
           "camera": [
-            19.1,
-            -619.09,
-            24.67
+            13.361,
+            0.14,
+            13.662
           ],
           "target": [
-            0,
-            90.116,
-            0
+            3.396,
+            0.18,
+            2.253
           ]
-        }
+        },
+        "modelAsset": "/assets3d/actors/woman1/woman1.fbx",
+        "clipName": "mixamo.com"
       },
       {
         "id": "stretch-hip-flexor",
@@ -384,16 +405,18 @@
         },
         "cameraView": {
           "camera": [
-            254.797,
-            65.19,
-            206.455
+            10.998,
+            -1.863,
+            8.334
           ],
           "target": [
-            0,
-            90.116,
-            0
+            0.284,
+            -2.326,
+            -0.23
           ]
-        }
+        },
+        "modelAsset": "/assets3d/actors/woman2/woman2.fbx",
+        "clipName": "mixamo.com"
       },
       {
         "id": "stretch-hamstring",
@@ -420,7 +443,18 @@
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "cameraView": {
+          "camera": [
+            7.28,
+            5.546,
+            10.399
+          ],
+          "target": [
+            0,
+            0,
+            0
+          ]
+        }
       },
       {
         "id": "stretch-chest",
@@ -517,16 +551,17 @@
         },
         "cameraView": {
           "camera": [
-            8.316,
-            -1.379,
-            7.559
+            9.869,
+            -3.453,
+            4.857
           ],
           "target": [
-            1.54,
-            -2.57,
-            1.201
+            0.007,
+            -3.779,
+            0.251
           ]
-        }
+        },
+        "modelAsset": "/assets3d/actors/man2/man2.fbx"
       },
       {
         "id": "warmup-core",
@@ -555,17 +590,18 @@
         },
         "cameraView": {
           "camera": [
-            8.005,
-            -2.298,
-            2.048
+            11.782,
+            -1.088,
+            -11.89
           ],
           "target": [
-            -2.174,
-            -3.927,
-            0.836
+            -0.49,
+            -0.873,
+            -0.512
           ]
         },
-        "clipName": "mixamo.com"
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/salsa_dancing/salsa_dancing.fbx"
       }
     ],
     "esercizi": [
@@ -634,17 +670,18 @@
         },
         "cameraView": {
           "camera": [
-            -16.309,
-            37.538,
-            15.152
+            -16.06,
+            10.838,
+            9.126
           ],
           "target": [
-            0,
-            0,
-            0
+            -5.363,
+            2.427,
+            0.844
           ]
         },
-        "clipName": "mixamo.com"
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/swing_dancing/swing_dancing.fbx"
       },
       {
         "id": "reverse-lunge",
@@ -673,17 +710,18 @@
         },
         "cameraView": {
           "camera": [
-            7.893,
-            -7.737,
-            7.731
+            21.399,
+            0.786,
+            4.083
           ],
           "target": [
-            -0.964,
-            -4.233,
-            -0.734
+            0,
+            0,
+            0
           ]
         },
-        "clipName": "mixamo.com"
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/swing_dancing1/swing_dancing1.fbx"
       },
       {
         "id": "mountain-climber",
@@ -712,16 +750,18 @@
         },
         "cameraView": {
           "camera": [
-            -198.012,
-            38.581,
-            172.903
+            -13.967,
+            -1.591,
+            11.986
           ],
           "target": [
             0,
-            90.116,
+            0,
             0
           ]
-        }
+        },
+        "modelAsset": "/assets3d/actors/woman/woman.fbx",
+        "clipName": "mixamo.com"
       },
       {
         "id": "jump-squat-controlled",
@@ -748,7 +788,20 @@
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "cameraView": {
+          "camera": [
+            8.263,
+            -0.703,
+            6.14
+          ],
+          "target": [
+            0.924,
+            -3.525,
+            0.572
+          ]
+        },
+        "modelAsset": "/assets3d/actors/man2/man2.fbx",
+        "clipName": "mixamo.com"
       },
       {
         "id": "dead-bug",
@@ -777,16 +830,18 @@
         },
         "cameraView": {
           "camera": [
-            19.1,
-            -619.09,
-            24.67
+            13.361,
+            0.14,
+            13.662
           ],
           "target": [
-            0,
-            90.116,
-            0
+            3.396,
+            0.18,
+            2.253
           ]
-        }
+        },
+        "modelAsset": "/assets3d/actors/woman1/woman1.fbx",
+        "clipName": "mixamo.com"
       }
     ],
     "stretching": [
@@ -817,16 +872,18 @@
         },
         "cameraView": {
           "camera": [
-            254.797,
-            65.19,
-            206.455
+            10.998,
+            -1.863,
+            8.334
           ],
           "target": [
-            0,
-            90.116,
-            0
+            0.284,
+            -2.326,
+            -0.23
           ]
-        }
+        },
+        "modelAsset": "/assets3d/actors/woman2/woman2.fbx",
+        "clipName": "mixamo.com"
       },
       {
         "id": "stretch-hamstring",
@@ -853,7 +910,18 @@
           "start": 0,
           "end": 20
         },
-        "cameraView": null
+        "cameraView": {
+          "camera": [
+            7.28,
+            5.546,
+            10.399
+          ],
+          "target": [
+            0,
+            0,
+            0
+          ]
+        }
       },
       {
         "id": "stretch-chest",

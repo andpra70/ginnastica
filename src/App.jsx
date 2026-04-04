@@ -712,6 +712,7 @@ export default function App() {
             {menuOpen ? (
               <div className="burger-menu">
                 <button type="button" className={activeView === 'trainer' ? 'active' : ''} onClick={() => { setActiveView('trainer'); setMenuOpen(false) }}>Trainer</button>
+                <button type="button" className={activeView === 'profile' ? 'active' : ''} onClick={() => { setActiveView('profile'); setMenuOpen(false) }}>Profilo</button>
                 {activeView === 'trainer' ? (
                   <label className="burger-level">
                     Training
@@ -745,165 +746,246 @@ export default function App() {
         </div>
       </header>
 
+      {activeView === 'profile' ? (
+        <section className="panel compact-panel setup-panel">
+          <h3>Profilo</h3>
+          <div className="editor-grid">
+            <label>Nome<input value={profile.nome} onChange={(e) => updateProfileField('nome', e.target.value)} /></label>
+            <label>Cognome<input value={profile.cognome} onChange={(e) => updateProfileField('cognome', e.target.value)} /></label>
+            <label>Alias<input value={profile.alias} onChange={(e) => updateProfileField('alias', e.target.value)} /></label>
+            <label>Email<input type="email" value={profile.email} onChange={(e) => updateProfileField('email', e.target.value)} /></label>
+            <label>
+              Sesso
+              <select value={profile.sesso} onChange={(e) => updateProfileField('sesso', e.target.value)}>
+                <option value="maschio">Maschio</option>
+                <option value="femmina">Femmina</option>
+                <option value="altro">Altro</option>
+              </select>
+            </label>
+          </div>
+        </section>
+      ) : null}
+
       {activeView === 'trainer' ? (
         <>
-          <section className="timer-strip">
-            <div className="timer-metrics">
-              <div><strong>Training:</strong> {trainingLabel}</div>
-              <div><strong>Totale:</strong> {formatTime(totalRemaining)}</div>
-              <div><strong>Scheda:</strong> {formatTime(currentRemaining)}</div>
-              <div><strong>Attuale:</strong> {currentCard?.name || 'N/A'}</div>
-            </div>
-          </section>
+          {!isProgramStep ? (
+            <section className="panel compact-panel setup-panel">
+              <h3>{setupStepLabels[setupStep] || 'Setup'}</h3>
+              <p className="hint">Step {setupStep + 1} di 4</p>
 
-          <section className="panel compact-panel card-nav">
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={() => {
-                const idx = Math.max(0, programCards.findIndex((c) => c.id === selectedCardId) - 1)
-                switchSelectedCard(programCards[idx]?.id || '')
-              }}
-            >
-              ‹
-            </button>
-            <select value={selectedCardId} onChange={(e) => switchSelectedCard(e.target.value)}>
-              {programCards.map((card) => (
-                <option key={card.id} value={card.id}>{card.classKey} · {card.name}</option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={() => {
-                const idx = Math.min(programCards.length - 1, programCards.findIndex((c) => c.id === selectedCardId) + 1)
-                switchSelectedCard(programCards[idx]?.id || '')
-              }}
-            >
-              ›
-            </button>
-            <div className="card-nav-play" aria-label="Controlli playback">
-              {!playMode ? (
-                <button type="button" className="icon-btn" title="Play" aria-label="Play" onClick={startPlay}>▶</button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    title={playRunning ? 'Pausa' : 'Continua'}
-                    aria-label={playRunning ? 'Pausa' : 'Continua'}
-                    onClick={() => setPlayRunning((v) => !v)}
-                  >
-                    {playRunning ? '❚❚' : '▶'}
-                  </button>
-                  <button type="button" className="icon-btn" title="Stop" aria-label="Stop" onClick={stopPlay}>■</button>
-                </>
-              )}
-            </div>
-          </section>
-
-          {playMode ? (
-            currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions }} /> : null
-          ) : (
-            selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions }} /> : null
-          )}
-
-          {isEditMode && selectedCard ? (
-            <section className="panel compact-panel editor-panel">
-              <h3>Editor Scheda</h3>
-              <div className="editor-grid">
-                <label>Nome<input value={selectedCard.name} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, name: e.target.value } : c))} /></label>
-                <label>Classe
-                  <select value={selectedCard.classKey} onChange={(e) => setProgramCardsBase((cards) => orderByClass(cards.map((c) => c.id === selectedCard.id ? { ...c, classKey: e.target.value } : c)))}>
-                    <option value="warmup">warmup</option>
-                    <option value="esercizio">esercizio</option>
-                    <option value="stretching">stretching</option>
-                  </select>
-                </label>
-                <label>Viewer
-                  <select value={selectedCard.viewerType} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, viewerType: e.target.value } : c))}>
-                    <option value="3d">3d</option>
-                    <option value="video">video</option>
-                  </select>
-                </label>
-                <label>Type<input value={selectedCard.type} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, type: e.target.value } : c))} /></label>
-                <label>Durata (sec)<input type="number" value={selectedCard.durationSec} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, durationSec: Number(e.target.value) || 0 } : c))} /></label>
-                <label>Serie<input type="number" value={selectedCard.sets} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, sets: Number(e.target.value) || 1 } : c))} /></label>
-                <label>Reps<input value={selectedCard.reps} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, reps: e.target.value } : c))} /></label>
-                <label>
-                  Esecuzione (una riga per punto)
-                  <textarea
-                    value={(selectedCard.execution || []).join('\n')}
-                    onChange={(e) => {
-                      const items = e.target.value.split('\n').map((v) => v.trim()).filter(Boolean)
-                      setProgramCardsBase((cards) => cards.map((c) => (c.id === selectedCard.id ? { ...c, execution: items } : c)))
-                    }}
-                  />
-                </label>
-                <label>
-                  Errori (una riga per punto)
-                  <textarea
-                    value={(selectedCard.mistakes || []).join('\n')}
-                    onChange={(e) => {
-                      const items = e.target.value.split('\n').map((v) => v.trim()).filter(Boolean)
-                      setProgramCardsBase((cards) => cards.map((c) => (c.id === selectedCard.id ? { ...c, mistakes: items } : c)))
-                    }}
-                  />
-                </label>
-                <label>
-                  Respirazione
-                  <textarea
-                    value={selectedCard.breathing || ''}
-                    onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => (c.id === selectedCard.id ? { ...c, breathing: e.target.value } : c)))}
-                  />
-                </label>
-                <label>Video URL (da segmento)<input value={selectedCard.videoSegment?.url || ''} readOnly /></label>
-              </div>
-              <div className="video-sources-editor">
-                <h4>Video Sorgenti</h4>
-                {(videoSources || []).map((url) => {
-                  const inUse = programCards.some((card) => {
-                    const segment = card.videoSegment || card.video
-                    return String(segment?.url || '') === String(url)
-                  })
-                  return (
-                    <div key={url} className="video-source-row">
-                      <input value={url} readOnly />
-                      <button
-                        type="button"
-                        disabled={inUse}
-                        title={inUse ? 'Sorgente usata da almeno una scheda' : 'Rimuovi sorgente'}
-                        onClick={() => setVideoSources((sources) => sources.filter((u) => u !== url))}
-                      >
-                        Rimuovi
-                      </button>
-                    </div>
-                  )
-                })}
-                <div className="video-source-row">
-                  <input
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={newVideoSource}
-                    onChange={(e) => setNewVideoSource(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = newVideoSource.trim()
-                      if (!url) return
-                      setVideoSources((sources) => (sources.includes(url) ? sources : [...sources, url]))
-                      setNewVideoSource('')
-                    }}
-                  >
-                    Aggiungi
-                  </button>
+              {setupStep === 0 ? (
+                <div className="editor-grid">
+                  <label>Nome<input value={profile.nome} onChange={(e) => updateProfileField('nome', e.target.value)} /></label>
+                  <label>Cognome<input value={profile.cognome} onChange={(e) => updateProfileField('cognome', e.target.value)} /></label>
+                  <label>Alias<input value={profile.alias} onChange={(e) => updateProfileField('alias', e.target.value)} /></label>
+                  <label>Email<input type="email" value={profile.email} onChange={(e) => updateProfileField('email', e.target.value)} /></label>
+                  <label>
+                    Sesso
+                    <select value={profile.sesso} onChange={(e) => updateProfileField('sesso', e.target.value)}>
+                      <option value="maschio">Maschio</option>
+                      <option value="femmina">Femmina</option>
+                      <option value="altro">Altro</option>
+                    </select>
+                  </label>
                 </div>
-              </div>
-              <div className="editor-actions">
-                <button type="button" onClick={saveProgramJson}>Salva JSON Programma</button>
+              ) : null}
+
+              {setupStep === 1 ? (
+                <div className="editor-grid">
+                  <label>
+                    Training
+                    <select value={trainingKey} onChange={(e) => setTrainingKey(e.target.value)}>
+                      {Object.entries(TRAINING_CONFIGS).map(([key, value]) => (
+                        <option key={key} value={key}>{value.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : null}
+
+              {setupStep === 2 ? (
+                <div className="editor-grid">
+                  <label>
+                    Livello
+                    <select value={level} onChange={(e) => setLevel(e.target.value)}>
+                      {Object.entries(levels).map(([key, value]) => (
+                        <option key={key} value={key}>{value.label || key}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : null}
+
+              <div className="setup-nav">
+                <button type="button" disabled={setupStep <= 0} onClick={() => setSetupStep((step) => Math.max(0, step - 1))}>
+                  Precedente
+                </button>
+                <button type="button" onClick={() => setSetupStep((step) => Math.min(3, step + 1))}>
+                  {setupStep >= 2 ? 'Vai al Programma' : 'Avanti'}
+                </button>
               </div>
             </section>
-          ) : null}
+          ) : (
+            <>
+              <section className="timer-strip">
+                <div className="timer-metrics">
+                  <div><strong>Training:</strong> {trainingLabel}</div>
+                  <div><strong>Totale:</strong> {formatTime(totalRemaining)}</div>
+                  <div><strong>Scheda:</strong> {formatTime(currentRemaining)}</div>
+                  <div><strong>Attuale:</strong> {currentCard?.name || 'N/A'}</div>
+                </div>
+              </section>
+
+              <section className="panel compact-panel card-nav">
+                <button
+                  type="button"
+                  className="icon-btn"
+                  onClick={() => {
+                    const idx = Math.max(0, programCards.findIndex((c) => c.id === selectedCardId) - 1)
+                    switchSelectedCard(programCards[idx]?.id || '')
+                  }}
+                >
+                  ‹
+                </button>
+                <select value={selectedCardId} onChange={(e) => switchSelectedCard(e.target.value)}>
+                  {programCards.map((card) => (
+                    <option key={card.id} value={card.id}>{card.classKey} · {card.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  onClick={() => {
+                    const idx = Math.min(programCards.length - 1, programCards.findIndex((c) => c.id === selectedCardId) + 1)
+                    switchSelectedCard(programCards[idx]?.id || '')
+                  }}
+                >
+                  ›
+                </button>
+                <div className="card-nav-play" aria-label="Controlli playback">
+                  {!playMode ? (
+                    <button type="button" className="icon-btn" title="Play" aria-label="Play" onClick={startPlay}>▶</button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        title={playRunning ? 'Pausa' : 'Continua'}
+                        aria-label={playRunning ? 'Pausa' : 'Continua'}
+                        onClick={() => setPlayRunning((v) => !v)}
+                      >
+                        {playRunning ? '❚❚' : '▶'}
+                      </button>
+                      <button type="button" className="icon-btn" title="Stop" aria-label="Stop" onClick={stopPlay}>■</button>
+                    </>
+                  )}
+                </div>
+              </section>
+
+              {playMode ? (
+                currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions }} /> : null
+              ) : (
+                selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions }} /> : null
+              )}
+
+              {isEditMode && selectedCard ? (
+                <section className="panel compact-panel editor-panel">
+                  <h3>Editor Scheda</h3>
+                  <div className="editor-grid">
+                    <label>Nome<input value={selectedCard.name} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, name: e.target.value } : c))} /></label>
+                    <label>Classe
+                      <select value={selectedCard.classKey} onChange={(e) => setProgramCardsBase((cards) => orderByClass(cards.map((c) => c.id === selectedCard.id ? { ...c, classKey: e.target.value } : c)))}>
+                        <option value="warmup">warmup</option>
+                        <option value="esercizio">esercizio</option>
+                        <option value="stretching">stretching</option>
+                      </select>
+                    </label>
+                    <label>Viewer
+                      <select value={selectedCard.viewerType} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, viewerType: e.target.value } : c))}>
+                        <option value="3d">3d</option>
+                        <option value="video">video</option>
+                      </select>
+                    </label>
+                    <label>Type<input value={selectedCard.type} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, type: e.target.value } : c))} /></label>
+                    <label>Durata (sec)<input type="number" value={selectedCard.durationSec} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, durationSec: Number(e.target.value) || 0 } : c))} /></label>
+                    <label>Serie<input type="number" value={selectedCard.sets} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, sets: Number(e.target.value) || 1 } : c))} /></label>
+                    <label>Reps<input value={selectedCard.reps} onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => c.id === selectedCard.id ? { ...c, reps: e.target.value } : c))} /></label>
+                    <label>
+                      Esecuzione (una riga per punto)
+                      <textarea
+                        value={(selectedCard.execution || []).join('\n')}
+                        onChange={(e) => {
+                          const items = e.target.value.split('\n').map((v) => v.trim()).filter(Boolean)
+                          setProgramCardsBase((cards) => cards.map((c) => (c.id === selectedCard.id ? { ...c, execution: items } : c)))
+                        }}
+                      />
+                    </label>
+                    <label>
+                      Errori (una riga per punto)
+                      <textarea
+                        value={(selectedCard.mistakes || []).join('\n')}
+                        onChange={(e) => {
+                          const items = e.target.value.split('\n').map((v) => v.trim()).filter(Boolean)
+                          setProgramCardsBase((cards) => cards.map((c) => (c.id === selectedCard.id ? { ...c, mistakes: items } : c)))
+                        }}
+                      />
+                    </label>
+                    <label>
+                      Respirazione
+                      <textarea
+                        value={selectedCard.breathing || ''}
+                        onChange={(e) => setProgramCardsBase((cards) => cards.map((c) => (c.id === selectedCard.id ? { ...c, breathing: e.target.value } : c)))}
+                      />
+                    </label>
+                    <label>Video URL (da segmento)<input value={selectedCard.videoSegment?.url || ''} readOnly /></label>
+                  </div>
+                  <div className="video-sources-editor">
+                    <h4>Video Sorgenti</h4>
+                    {(videoSources || []).map((url) => {
+                      const inUse = programCards.some((card) => {
+                        const segment = card.videoSegment || card.video
+                        return String(segment?.url || '') === String(url)
+                      })
+                      return (
+                        <div key={url} className="video-source-row">
+                          <input value={url} readOnly />
+                          <button
+                            type="button"
+                            disabled={inUse}
+                            title={inUse ? 'Sorgente usata da almeno una scheda' : 'Rimuovi sorgente'}
+                            onClick={() => setVideoSources((sources) => sources.filter((u) => u !== url))}
+                          >
+                            Rimuovi
+                          </button>
+                        </div>
+                      )
+                    })}
+                    <div className="video-source-row">
+                      <input
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        value={newVideoSource}
+                        onChange={(e) => setNewVideoSource(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = newVideoSource.trim()
+                          if (!url) return
+                          setVideoSources((sources) => (sources.includes(url) ? sources : [...sources, url]))
+                          setNewVideoSource('')
+                        }}
+                      >
+                        Aggiungi
+                      </button>
+                    </div>
+                  </div>
+                  <div className="editor-actions">
+                    <button type="button" onClick={saveProgramJson}>Salva JSON Programma</button>
+                  </div>
+                </section>
+              ) : null}
+            </>
+          )}
         </>
       ) : null}
 
