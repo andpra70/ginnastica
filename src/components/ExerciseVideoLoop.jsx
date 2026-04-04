@@ -98,6 +98,7 @@ export default function ExerciseVideoLoop({
   const [durationSec, setDurationSec] = useState(Math.max(defaults.end + 10, 60))
   const [draggingHandle, setDraggingHandle] = useState(null)
   const [autoRangeFromDuration, setAutoRangeFromDuration] = useState(false)
+  const [playerReadyTick, setPlayerReadyTick] = useState(0)
 
   useEffect(() => {
     const fallbackUrl = defaults.url || videoSources[0] || ''
@@ -132,6 +133,7 @@ export default function ExerciseVideoLoop({
           existing.playVideo?.()
           const duration = Number(existing.getDuration?.() || 0)
           if (duration > 1) setDurationSec(duration)
+          setPlayerReadyTick((value) => value + 1)
           return
         } catch {
           safeDestroyPlayer(existing)
@@ -168,6 +170,7 @@ export default function ExerciseVideoLoop({
               player.seekTo(startSec, true)
             }
             player.playVideo()
+            setPlayerReadyTick((value) => value + 1)
           }
         }
       })
@@ -226,7 +229,7 @@ export default function ExerciseVideoLoop({
         pollerRef.current = null
       }
     }
-  }, [startSec, endSec, exercise?.id, selectedVideoUrl])
+  }, [startSec, endSec, exercise?.id, selectedVideoUrl, playerReadyTick])
 
   if (!selectedVideoUrl) {
     return null

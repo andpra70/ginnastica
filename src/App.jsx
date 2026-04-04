@@ -20,6 +20,7 @@ const TRAINING_CONFIGS = {
 const STORAGE_ROOT_KEY = 'ginnastica'
 const PROFILE_STORAGE_KEY = 'ginnastica.profile'
 const WORKOUT_HISTORY_STORAGE_KEY = 'ginnastica.workout.history'
+const SESSION_STORAGE_KEY = 'ginnastica.session.state'
 
 function readAppStorage() {
   if (typeof window === 'undefined') return {}
@@ -141,6 +142,16 @@ function formatTime(totalSeconds) {
   const minutes = Math.floor(value / 60)
   const seconds = value % 60
   return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+function clampPercent(value) {
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(100, value))
+}
+
+function clampRange(value, min, max) {
+  if (!Number.isFinite(value)) return min
+  return Math.max(min, Math.min(max, value))
 }
 
 function getEditMode() {
@@ -395,6 +406,18 @@ function readSavedWorkoutHistory() {
   }
 }
 
+function readSavedSessionState() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = getStoredValue(SESSION_STORAGE_KEY)
+    if (typeof raw !== 'string' || !raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 const APP_SECTIONS = ['profile', 'setup', 'training', 'history', 'results', 'settings']
 
 function CardViewer({ card }) {
@@ -467,7 +490,7 @@ function CardViewer({ card }) {
   )
 }
 
-function ProgramCard({ card }) {
+function ProgramCard({ card, cardProgressPct = 0 }) {
   return (
     <section className="panel compact-panel detail program-card">
       <div className="detail-head">
@@ -476,6 +499,12 @@ function ProgramCard({ card }) {
           <div className="title-inline">
             <h3>{card.name}</h3>
             <p className="timer-chip">Timer scheda: {formatTime(card.durationScaledSec)}</p>
+          </div>
+          <div className="card-progress-row" aria-label={`Progresso scheda ${cardProgressPct.toFixed(0)} percento`}>
+            <div className="card-progress-track">
+              <div className="card-progress-fill" style={{ width: `${cardProgressPct}%` }} />
+            </div>
+            <span className="card-progress-value">{`${cardProgressPct.toFixed(0)}%`}</span>
           </div>
           <p className="hint">{card.type} • {card.setsScaled} serie • {card.repsScaled || card.reps}</p>
 
@@ -510,7 +539,11 @@ function ProgramCard({ card }) {
 }
 
 export default function App() {
-  const [activeView, setActiveView] = useState('profile')
+  const initialSessionStateRef = useRef(readSavedSessionState())
+  const [activeView, setActiveView] = useState(() => {
+    const saved = initialSessionStateRef.current?.activeView
+    return APP_SECTIONS.includes(saved) ? saved : 'profile'
+  })
   const [menuOpen, setMenuOpen] = useState(false)
   const [profile, setProfile] = useState(() => readSavedProfile())
   const [theme, setTheme] = useState(() => {
@@ -526,6 +559,27 @@ export default function App() {
   const [videoAudioEnabled, setVideoAudioEnabled] = useState(() => {
     if (typeof window === 'undefined') return false
     return getStoredValue('ginnastica.settings.videoAudioEnabled') === '1'
+  })
+  const [clockEnabled, setClockEnabled] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const raw = getStoredValue('ginnastica.settings.clockEnabled')
+    if (raw == null || raw === '') return true
+    return raw === '1'
+  })
+  const [clockVolumePct, setClockVolumePct] = useState(() => {
+    if (typeof window === 'undefined') return 30
+    const rawStored = getStoredValue('ginnastica.settings.clockVolumePct')
+    if (rawStored == null || rawStored === '') return 30
+    const raw = Number(rawStored)
+    return clampRange(raw, 0, 100)
+  })
+  const [clockCadenceSec, setClockCadenceSec] = useState(() => {
+    if (typeof window === 'undefined') return 5
+    const rawStored = getStoredValue('ginnastica.settings.clockCadenceSec')
+    if (rawStored == null || rawStored === '') return 5
+    const raw = Number(rawStored)
+    const stepped = Math.round(raw / 5) * 5
+    return clampRange(stepped, 5, 60)
   })
   const [level, setLevel] = useState('base')
   const [playMode, setPlayMode] = useState(false)
@@ -544,6 +598,8 @@ export default function App() {
   const [selectedHistoryEventId, setSelectedHistoryEventId] = useState(null)
   const weightChartRef = useRef(null)
   const activeWorkoutSessionRef = useRef(null)
+  const clockAudioContextRef = useRef(null)
+  const lastClockTickSecRef = useRef(-1)
   const googleButtonHostRef = useRef(null)
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
   const [googleLoginError, setGoogleLoginError] = useState('')
@@ -585,6 +641,7 @@ export default function App() {
   const [programCardsBase, setProgramCardsBase] = useState([])
   const latestVideoByCardRef = useRef({})
   const latestClipByCardRef = useRef({})
+  const sessionRestoredRef = useRef(false)
 
   useEffect(() => {
     setStoredValue('ginnastica.training.key', trainingKey)
@@ -614,6 +671,18 @@ export default function App() {
   useEffect(() => {
     setStoredValue('ginnastica.settings.videoAudioEnabled', videoAudioEnabled ? '1' : '0')
   }, [videoAudioEnabled])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.clockEnabled', clockEnabled ? '1' : '0')
+  }, [clockEnabled])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.clockVolumePct', String(clockVolumePct))
+  }, [clockVolumePct])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.clockCadenceSec', String(clockCadenceSec))
+  }, [clockCadenceSec])
 
   useEffect(() => {
     setStoredValue(WORKOUT_HISTORY_STORAGE_KEY, JSON.stringify(workoutHistory))
@@ -803,6 +872,54 @@ export default function App() {
     if (currentRemaining <= 0) setCurrentRemaining(programCards[playIndex]?.durationScaledSec || 0)
   }, [playMode, totalProgramSec, programCards, playIndex, currentRemaining, selectedCard])
 
+  useEffect(() => {
+    if (sessionRestoredRef.current) return
+    if (!programCards.length) return
+
+    const saved = initialSessionStateRef.current
+    sessionRestoredRef.current = true
+    if (!saved || saved.trainingKey !== trainingKey) return
+
+    const savedLevel = typeof saved.level === 'string' ? saved.level : ''
+    if (savedLevel && levels[savedLevel]) setLevel(savedLevel)
+
+    const savedCardId = typeof saved.selectedCardId === 'string' ? saved.selectedCardId : ''
+    const canUseSavedCard = savedCardId && programCards.some((card) => card.id === savedCardId)
+    if (canUseSavedCard) setSelectedCardId(savedCardId)
+
+    if (!saved.playMode) return
+
+    const safePlayIndex = Math.max(0, Math.min(programCards.length - 1, Number(saved.playIndex) || 0))
+    const activeCard = programCards[safePlayIndex]
+    const activeCardDuration = activeCard?.durationScaledSec || 0
+    const safeTotalRemaining = Math.max(0, Math.min(totalProgramSec, Number(saved.totalRemaining) || totalProgramSec))
+    const safeCurrentRemaining = Math.max(0, Math.min(activeCardDuration, Number(saved.currentRemaining) || activeCardDuration))
+
+    setPlayMode(true)
+    setPlayRunning(true)
+    setPlayIndex(safePlayIndex)
+    if (activeCard?.id) setSelectedCardId(activeCard.id)
+    setTotalRemaining(safeTotalRemaining)
+    setCurrentRemaining(safeCurrentRemaining)
+
+    const savedSession = saved.activeWorkoutSession
+    if (savedSession && typeof savedSession === 'object' && Number.isFinite(Number(savedSession.startMs))) {
+      activeWorkoutSessionRef.current = {
+        startMs: Number(savedSession.startMs),
+        trainingKey: typeof savedSession.trainingKey === 'string' ? savedSession.trainingKey : trainingKey,
+        trainingLabel: typeof savedSession.trainingLabel === 'string' ? savedSession.trainingLabel : trainingLabel,
+        level: typeof savedSession.level === 'string' ? savedSession.level : level
+      }
+    } else {
+      activeWorkoutSessionRef.current = {
+        startMs: Date.now(),
+        trainingKey,
+        trainingLabel,
+        level
+      }
+    }
+  }, [programCards, trainingKey, totalProgramSec, levels, trainingLabel, level])
+
   const completeWorkoutSession = useCallback((endReason = 'stop') => {
     const session = activeWorkoutSessionRef.current
     if (!session) return
@@ -851,6 +968,15 @@ export default function App() {
   }, [playMode, playRunning, programCards, commitCardDraft, completeWorkoutSession])
 
   const currentCard = playMode ? programCards[playIndex] : selectedCard
+  const programProgressPct = useMemo(() => {
+    if (!playMode || totalProgramSec <= 0) return 0
+    return clampPercent(((totalProgramSec - totalRemaining) / totalProgramSec) * 100)
+  }, [playMode, totalProgramSec, totalRemaining])
+  const currentCardDurationSec = currentCard?.durationScaledSec || 0
+  const currentCardProgressPct = useMemo(() => {
+    if (!playMode || currentCardDurationSec <= 0) return 0
+    return clampPercent(((currentCardDurationSec - currentRemaining) / currentCardDurationSec) * 100)
+  }, [playMode, currentCardDurationSec, currentRemaining])
 
   const startPlay = () => {
     if (!programCards.length) return
@@ -877,6 +1003,102 @@ export default function App() {
     setTotalRemaining(totalProgramSec)
     setCurrentRemaining(selectedCard?.durationScaledSec || 0)
   }
+
+  const playClockChime = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return
+    if (!clockEnabled) return
+    const volume = clampRange(clockVolumePct, 0, 100) / 100
+    if (volume <= 0) return
+
+    let ctx = clockAudioContextRef.current
+    if (!ctx) {
+      ctx = new AudioCtx()
+      clockAudioContextRef.current = ctx
+    }
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume()
+      } catch {
+        return
+      }
+    }
+
+    const t0 = ctx.currentTime + 0.01
+    const pulse = (freq, start, len, gainMul = 1) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(freq, start)
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.02, start + len * 0.35)
+      gain.gain.setValueAtTime(0.0001, start)
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * gainMul), start + 0.005)
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + len)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(start)
+      osc.stop(start + len + 0.01)
+      osc.onended = () => {
+        osc.disconnect()
+        gain.disconnect()
+      }
+    }
+
+    pulse(1320, t0, 0.08, 0.75)
+    pulse(1760, t0 + 0.1, 0.09, 0.95)
+  }, [clockEnabled, clockVolumePct])
+
+  useEffect(() => {
+    if (!playMode || !playRunning || !clockEnabled) {
+      lastClockTickSecRef.current = -1
+      return
+    }
+    const elapsedSec = Math.max(0, Math.round(totalProgramSec - totalRemaining))
+    const cadence = clampRange(Math.round(clockCadenceSec / 5) * 5, 5, 60)
+    if (elapsedSec <= 0 || elapsedSec % cadence !== 0) return
+    if (lastClockTickSecRef.current === elapsedSec) return
+    lastClockTickSecRef.current = elapsedSec
+    playClockChime()
+  }, [playMode, playRunning, clockEnabled, clockCadenceSec, totalProgramSec, totalRemaining, playClockChime])
+
+  useEffect(() => {
+    return () => {
+      const ctx = clockAudioContextRef.current
+      if (!ctx) return
+      try {
+        ctx.close()
+      } catch {
+        // ignore cleanup errors
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const snapshot = {
+      activeView,
+      trainingKey,
+      level,
+      selectedCardId: selectedCardId || '',
+      playMode: Boolean(playMode),
+      playRunning: Boolean(playMode ? playRunning : false),
+      playIndex: Number.isFinite(playIndex) ? playIndex : 0,
+      totalRemaining: Number.isFinite(totalRemaining) ? totalRemaining : 0,
+      currentRemaining: Number.isFinite(currentRemaining) ? currentRemaining : 0,
+      activeWorkoutSession: playMode ? (activeWorkoutSessionRef.current || null) : null
+    }
+    setStoredValue(SESSION_STORAGE_KEY, JSON.stringify(snapshot))
+  }, [
+    activeView,
+    trainingKey,
+    level,
+    selectedCardId,
+    playMode,
+    playRunning,
+    playIndex,
+    totalRemaining,
+    currentRemaining
+  ])
 
   const handleCameraSaved = useCallback((cardId, viewPayload) => {
     const normalized = normalizeCameraView(viewPayload)
@@ -1310,8 +1532,41 @@ export default function App() {
                 onChange={(e) => setVideoAudioEnabled(e.target.checked)}
               />
             </label>
+            <label className="toggle-row">
+              <span>Clock 15s</span>
+              <input
+                type="checkbox"
+                checked={clockEnabled}
+                onChange={(e) => setClockEnabled(e.target.checked)}
+              />
+            </label>
+            <label>
+              Volume clock: {clockVolumePct}%
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={clockVolumePct}
+                onChange={(e) => setClockVolumePct(clampRange(Number(e.target.value), 0, 100))}
+                disabled={!clockEnabled}
+              />
+            </label>
+            <label>
+              Cadenza clock: {clockCadenceSec}s
+              <input
+                type="range"
+                min="5"
+                max="60"
+                step="5"
+                value={clockCadenceSec}
+                onChange={(e) => setClockCadenceSec(clampRange(Number(e.target.value), 5, 60))}
+                disabled={!clockEnabled}
+              />
+            </label>
           </div>
           <p className="hint">{videoAudioEnabled ? 'Audio video abilitato.' : 'Audio video disabilitato (default).'}</p>
+          <p className="hint">{clockEnabled ? `Clock attivo: beep ogni ${clockCadenceSec} secondi (volume ${clockVolumePct}%).` : 'Clock disabilitato.'}</p>
         </section>
       ) : null}
 
@@ -1326,6 +1581,12 @@ export default function App() {
                   <div><strong>Totale:</strong> {formatTime(totalRemaining)}</div>
                   <div><strong>Scheda:</strong> {formatTime(currentRemaining)}</div>
                   <div><strong>Attuale:</strong> {currentCard?.name || 'N/A'}</div>
+                </div>
+                <div className="timer-progress-row" aria-label={`Progresso programma ${programProgressPct.toFixed(0)} percento`}>
+                  <div className="timer-progress-track">
+                    <div className="timer-progress-fill" style={{ width: `${programProgressPct}%` }} />
+                  </div>
+                  <span className="timer-progress-value">{`${programProgressPct.toFixed(0)}%`}</span>
                 </div>
               </section>
 
@@ -1376,9 +1637,9 @@ export default function App() {
               </section>
 
               {playMode ? (
-                currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled }} /> : null
+                currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled }} cardProgressPct={currentCardProgressPct} /> : null
               ) : (
-                selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled }} /> : null
+                selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled }} cardProgressPct={currentCardProgressPct} /> : null
               )}
 
               {isEditMode && selectedCard ? (
