@@ -1308,7 +1308,7 @@ input[type='range'] {
 .weight-entry-row {
   display: grid;
   gap: 0.45rem;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   align-items: end;
 }
 
@@ -1319,6 +1319,17 @@ input[type='range'] {
   padding: 0.28rem 0.5rem;
   font-weight: 700;
   cursor: pointer;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .weight-entry-row {
+    grid-template-columns: 1fr;
+  }
+
+  .weight-entry-row button {
+    width: 100%;
+  }
 }
 
 .weight-history-list {
