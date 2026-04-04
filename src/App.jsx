@@ -18,6 +18,31 @@ const TRAINING_CONFIGS = {
 
 const PROFILE_STORAGE_KEY = 'ginnastica.profile'
 
+function getTodayDateInputValue() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function normalizeWeightHistory(entries) {
+  if (!Array.isArray(entries)) return []
+  const normalized = entries
+    .map((entry) => {
+      const date = typeof entry?.date === 'string' ? entry.date : ''
+      const weight = Number(entry?.weight)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
+      if (!Number.isFinite(weight) || weight <= 0) return null
+      return { date, weight: Number(weight.toFixed(2)) }
+    })
+    .filter(Boolean)
+
+  const byDate = new Map()
+  for (const row of normalized) byDate.set(row.date, row)
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date))
+}
+
 function formatTime(totalSeconds) {
   const value = Math.max(0, Math.floor(totalSeconds))
   const minutes = Math.floor(value / 60)
@@ -218,26 +243,48 @@ function readSavedProfile() {
       cognome: '',
       alias: '',
       email: '',
-      sesso: 'maschio'
+      sesso: 'maschio',
+      altezza: '',
+      pesoHistory: []
     }
   }
   try {
     const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY)
-    if (!raw) return { nome: '', cognome: '', alias: '', email: '', sesso: 'maschio' }
+    if (!raw) {
+      return {
+        nome: '',
+        cognome: '',
+        alias: '',
+        email: '',
+        sesso: 'maschio',
+        altezza: '',
+        pesoHistory: []
+      }
+    }
     const parsed = JSON.parse(raw)
     return {
       nome: typeof parsed?.nome === 'string' ? parsed.nome : '',
       cognome: typeof parsed?.cognome === 'string' ? parsed.cognome : '',
       alias: typeof parsed?.alias === 'string' ? parsed.alias : '',
       email: typeof parsed?.email === 'string' ? parsed.email : '',
-      sesso: typeof parsed?.sesso === 'string' ? parsed.sesso : 'maschio'
+      sesso: typeof parsed?.sesso === 'string' ? parsed.sesso : 'maschio',
+      altezza: typeof parsed?.altezza === 'string' ? parsed.altezza : '',
+      pesoHistory: normalizeWeightHistory(parsed?.pesoHistory)
     }
   } catch {
-    return { nome: '', cognome: '', alias: '', email: '', sesso: 'maschio' }
+    return {
+      nome: '',
+      cognome: '',
+      alias: '',
+      email: '',
+      sesso: 'maschio',
+      altezza: '',
+      pesoHistory: []
+    }
   }
 }
 
-const APP_SECTIONS = ['profile', 'setup', 'training']
+const APP_SECTIONS = ['profile', 'setup', 'training', 'results']
 
 function CardViewer({ card }) {
   const handleVideoSegmentChange = useCallback(
@@ -360,6 +407,8 @@ export default function App() {
   const [playIndex, setPlayIndex] = useState(0)
   const [totalRemaining, setTotalRemaining] = useState(0)
   const [currentRemaining, setCurrentRemaining] = useState(0)
+  const [weightEntryDate, setWeightEntryDate] = useState(() => getTodayDateInputValue())
+  const [weightEntryValue, setWeightEntryValue] = useState('')
 
   const isEditMode = getEditMode()
   const logoSrc = `${import.meta.env.BASE_URL}decathlon.svg`
@@ -686,6 +735,30 @@ export default function App() {
     if (!canGoNext) return
     setActiveView(APP_SECTIONS[sectionIndex + 1])
   }, [canGoNext, sectionIndex])
+  const sortedWeightHistory = useMemo(
+    () => normalizeWeightHistory(profile.pesoHistory),
+    [profile.pesoHistory]
+  )
+  const latestWeight = sortedWeightHistory.length ? sortedWeightHistory[sortedWeightHistory.length - 1] : null
+
+  const addOrUpdateWeightEntry = useCallback(() => {
+    const date = String(weightEntryDate || '').trim()
+    const weight = Number(weightEntryValue)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return
+    if (!Number.isFinite(weight) || weight <= 0) return
+
+    setProfile((prev) => {
+      const existing = normalizeWeightHistory(prev.pesoHistory)
+      const byDate = new Map(existing.map((row) => [row.date, row]))
+      byDate.set(date, { date, weight: Number(weight.toFixed(2)) })
+      return { ...prev, pesoHistory: [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)) }
+    })
+    setWeightEntryValue('')
+  }, [weightEntryDate, weightEntryValue])
+
+  const removeWeightEntry = useCallback((date) => {
+    setProfile((prev) => ({ ...prev, pesoHistory: normalizeWeightHistory(prev.pesoHistory).filter((row) => row.date !== date) }))
+  }, [])
 
   return (
     <main className="layout compact-layout">
@@ -717,6 +790,7 @@ export default function App() {
                 <button type="button" className={activeView === 'profile' ? 'active' : ''} onClick={() => { setActiveView('profile'); setMenuOpen(false) }}>Profilo</button>
                 <button type="button" className={activeView === 'setup' ? 'active' : ''} onClick={() => { setActiveView('setup'); setMenuOpen(false) }}>Configurazione</button>
                 <button type="button" className={activeView === 'training' ? 'active' : ''} onClick={() => { setActiveView('training'); setMenuOpen(false) }}>{`Training: ${trainingLabel}`}</button>
+                <button type="button" className={activeView === 'results' ? 'active' : ''} onClick={() => { setActiveView('results'); setMenuOpen(false) }}>Risultati</button>
               </div>
             ) : null}
           </div>
@@ -731,6 +805,7 @@ export default function App() {
             <label>Cognome<input value={profile.cognome} onChange={(e) => updateProfileField('cognome', e.target.value)} /></label>
             <label>Alias<input value={profile.alias} onChange={(e) => updateProfileField('alias', e.target.value)} /></label>
             <label>Email<input type="email" value={profile.email} onChange={(e) => updateProfileField('email', e.target.value)} /></label>
+            <label>Altezza (cm)<input type="number" min="0" step="1" value={profile.altezza} onChange={(e) => updateProfileField('altezza', e.target.value)} /></label>
             <label>
               Sesso
               <select value={profile.sesso} onChange={(e) => updateProfileField('sesso', e.target.value)}>
@@ -739,6 +814,33 @@ export default function App() {
                 <option value="altro">Altro</option>
               </select>
             </label>
+          </div>
+          <div className="weight-panel">
+            <h4>Peso (storico per data)</h4>
+            <div className="weight-entry-row">
+              <label>
+                Data
+                <input type="date" value={weightEntryDate} onChange={(e) => setWeightEntryDate(e.target.value)} />
+              </label>
+              <label>
+                Peso (kg)
+                <input type="number" min="1" step="0.1" value={weightEntryValue} onChange={(e) => setWeightEntryValue(e.target.value)} />
+              </label>
+              <button type="button" onClick={addOrUpdateWeightEntry}>Salva Peso</button>
+            </div>
+            <div className="weight-history-list">
+              {sortedWeightHistory.length ? (
+                sortedWeightHistory.map((row) => (
+                  <div className="weight-history-item" key={row.date}>
+                    <span>{row.date}</span>
+                    <strong>{row.weight} kg</strong>
+                    <button type="button" onClick={() => removeWeightEntry(row.date)}>Rimuovi</button>
+                  </div>
+                ))
+              ) : (
+                <p className="hint">Nessun peso registrato.</p>
+              )}
+            </div>
           </div>
         </section>
       ) : null}
@@ -927,6 +1029,87 @@ export default function App() {
                 </section>
               ) : null}
         </>
+      ) : null}
+
+      {activeView === 'results' ? (
+        <section className="panel compact-panel setup-panel">
+          <h3>Risultati</h3>
+          {latestWeight ? (
+            <p className="hint">{`Ultimo peso: ${latestWeight.weight} kg (${latestWeight.date})`}</p>
+          ) : (
+            <p className="hint">Nessun dato peso disponibile.</p>
+          )}
+          {sortedWeightHistory.length >= 2 ? (
+            <div className="weight-chart-wrap">
+              <svg viewBox="0 0 120 70" preserveAspectRatio="none" className="weight-chart">
+                {(() => {
+                  const points = sortedWeightHistory
+                  const minW = Math.min(...points.map((p) => p.weight))
+                  const maxW = Math.max(...points.map((p) => p.weight))
+                  const spread = Math.max(0.001, maxW - minW)
+                  const plot = { left: 16, right: 114, top: 8, bottom: 52 }
+                  const xStep = points.length > 1 ? (plot.right - plot.left) / (points.length - 1) : 0
+                  const yTicks = 4
+                  const linePoints = points.map((p, i) => {
+                    const x = plot.left + i * xStep
+                    const y = plot.bottom - ((p.weight - minW) / spread) * (plot.bottom - plot.top)
+                    return { x, y, ...p }
+                  })
+                  const d = linePoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ')
+                  const dateLabelIndexes = points.length <= 6
+                    ? points.map((_, i) => i)
+                    : [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])]
+                  const formatShortDate = (isoDate) => {
+                    const [year, month, day] = String(isoDate).split('-')
+                    if (!year || !month || !day) return isoDate
+                    return `${day}/${month}`
+                  }
+                  return (
+                    <>
+                      <rect x="0" y="0" width="120" height="70" fill="transparent" />
+                      {Array.from({ length: yTicks + 1 }).map((_, idx) => {
+                        const ratio = idx / yTicks
+                        const y = plot.bottom - ratio * (plot.bottom - plot.top)
+                        const tickValue = (minW + ratio * spread).toFixed(1)
+                        return (
+                          <g key={`y-${tickValue}`}>
+                            <line x1={plot.left} y1={y} x2={plot.right} y2={y} stroke="currentColor" strokeOpacity="0.18" strokeWidth="0.4" />
+                            <text x={plot.left - 1.5} y={y + 0.9} textAnchor="end" fontSize="2.8" fill="currentColor">{tickValue}</text>
+                          </g>
+                        )
+                      })}
+                      <text x={2} y={plot.top - 1.5} textAnchor="start" fontSize="2.8" fill="currentColor">Peso (kg)</text>
+                      <line x1={plot.left} y1={plot.bottom} x2={plot.right} y2={plot.bottom} stroke="currentColor" strokeOpacity="0.35" strokeWidth="0.4" />
+                      <line x1={plot.left} y1={plot.top} x2={plot.left} y2={plot.bottom} stroke="currentColor" strokeOpacity="0.35" strokeWidth="0.4" />
+                      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.1" />
+                      {linePoints.map((p) => (
+                        <circle key={p.date} cx={p.x} cy={p.y} r="1.05" fill="currentColor" />
+                      ))}
+                      {dateLabelIndexes.map((idx) => {
+                        const p = linePoints[idx]
+                        return (
+                          <text key={`x-${p.date}`} x={p.x} y={plot.bottom + 6} textAnchor="middle" fontSize="2.8" fill="currentColor">
+                            {formatShortDate(p.date)}
+                          </text>
+                        )
+                      })}
+                    </>
+                  )
+                })()}
+              </svg>
+              <div className="weight-chart-legend">
+                {sortedWeightHistory.map((row) => (
+                  <div key={`legend-${row.date}`} className="weight-chart-legend-item">
+                    <span>{row.date}</span>
+                    <strong>{row.weight} kg</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="hint">Inserisci almeno due pesi per visualizzare il diagramma.</p>
+          )}
+        </section>
       ) : null}
 
       <section className="panel compact-panel setup-panel">
