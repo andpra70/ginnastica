@@ -71,7 +71,13 @@ function safeDestroyPlayer(player) {
   }
 }
 
-export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegmentChange, editable = false }) {
+export default function ExerciseVideoLoop({
+  exercise,
+  videoSources = [],
+  onSegmentChange,
+  editable = false,
+  muted = true
+}) {
   const playerHostRef = useRef(null)
   const timelineRef = useRef(null)
   const playerRef = useRef(null)
@@ -121,6 +127,8 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
       if (existing && existingIframe?.parentElement === host) {
         try {
           existing.loadVideoById?.({ videoId, startSeconds: startSec })
+          if (muted) existing.mute?.()
+          else existing.unMute?.()
           existing.playVideo?.()
           const duration = Number(existing.getDuration?.() || 0)
           if (duration > 1) setDurationSec(duration)
@@ -140,12 +148,15 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
           controls: 1,
           rel: 0,
           playsinline: 1,
-          modestbranding: 1
+          modestbranding: 1,
+          mute: muted ? 1 : 0
         },
         events: {
           onReady: () => {
             const player = playerRef.current
             if (!isReadyPlayer(player)) return
+            if (muted) player.mute?.()
+            else player.unMute?.()
             const duration = Number(player.getDuration?.() || 0)
             if (duration > 1) setDurationSec(duration)
             if (autoRangeFromDuration && duration > 1) {
@@ -167,7 +178,14 @@ export default function ExerciseVideoLoop({ exercise, videoSources = [], onSegme
       safeDestroyPlayer(playerRef.current)
       playerRef.current = null
     }
-  }, [videoId, autoRangeFromDuration])
+  }, [videoId, autoRangeFromDuration, muted])
+
+  useEffect(() => {
+    const player = playerRef.current
+    if (!isReadyPlayer(player)) return
+    if (muted) player.mute?.()
+    else player.unMute?.()
+  }, [muted])
 
   useEffect(() => {
     if (!isReadyPlayer(playerRef.current)) return undefined

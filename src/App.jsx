@@ -395,7 +395,7 @@ function readSavedWorkoutHistory() {
   }
 }
 
-const APP_SECTIONS = ['profile', 'setup', 'training', 'history', 'results']
+const APP_SECTIONS = ['profile', 'setup', 'training', 'history', 'results', 'settings']
 
 function CardViewer({ card }) {
   const handleVideoSegmentChange = useCallback(
@@ -432,6 +432,7 @@ function CardViewer({ card }) {
             exercise={exerciseVideo}
             videoSources={card.videoSources || []}
             onSegmentChange={handleVideoSegmentChange}
+            muted={Boolean(card.videoMuted)}
             editable
           />
         </div>
@@ -444,6 +445,7 @@ function CardViewer({ card }) {
           exercise={exerciseVideo}
           videoSources={card.videoSources || []}
           onSegmentChange={undefined}
+          muted={Boolean(card.videoMuted)}
           editable={false}
         />
       </div>
@@ -520,6 +522,10 @@ export default function App() {
     if (typeof window === 'undefined') return 'calistenichs'
     const saved = getStoredValue('ginnastica.training.key')
     return TRAINING_CONFIGS[saved] ? saved : 'calistenichs'
+  })
+  const [videoAudioEnabled, setVideoAudioEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return getStoredValue('ginnastica.settings.videoAudioEnabled') === '1'
   })
   const [level, setLevel] = useState('base')
   const [playMode, setPlayMode] = useState(false)
@@ -604,6 +610,10 @@ export default function App() {
   useEffect(() => {
     setStoredValue(PROFILE_STORAGE_KEY, JSON.stringify(profile))
   }, [profile])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.videoAudioEnabled', videoAudioEnabled ? '1' : '0')
+  }, [videoAudioEnabled])
 
   useEffect(() => {
     setStoredValue(WORKOUT_HISTORY_STORAGE_KEY, JSON.stringify(workoutHistory))
@@ -1198,6 +1208,10 @@ export default function App() {
                   <img src={sectionIcons.results} alt="" className="burger-icon" />
                   <span>Risultati</span>
                 </button>
+                <button type="button" className={activeView === 'settings' ? 'active' : ''} onClick={() => { setActiveView('settings'); setMenuOpen(false) }}>
+                  <span className="burger-glyph" aria-hidden="true">⚙</span>
+                  <span>Settings</span>
+                </button>
               </div>
             ) : null}
           </div>
@@ -1284,6 +1298,23 @@ export default function App() {
         </section>
       ) : null}
 
+      {activeView === 'settings' ? (
+        <section className="panel compact-panel setup-panel">
+          <h3 className="section-heading"><span className="section-glyph-icon" aria-hidden="true">⚙</span>Settings</h3>
+          <div className="editor-grid">
+            <label className="toggle-row">
+              <span>Audio video</span>
+              <input
+                type="checkbox"
+                checked={videoAudioEnabled}
+                onChange={(e) => setVideoAudioEnabled(e.target.checked)}
+              />
+            </label>
+          </div>
+          <p className="hint">{videoAudioEnabled ? 'Audio video abilitato.' : 'Audio video disabilitato (default).'}</p>
+        </section>
+      ) : null}
+
       {activeView === 'training' ? (
         <>
               <section className="panel compact-panel setup-panel">
@@ -1345,9 +1376,9 @@ export default function App() {
               </section>
 
               {playMode ? (
-                currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions }} /> : null
+                currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled }} /> : null
               ) : (
-                selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions }} /> : null
+                selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions, videoMuted: !videoAudioEnabled }} /> : null
               )}
 
               {isEditMode && selectedCard ? (
