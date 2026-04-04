@@ -550,17 +550,17 @@ function ProgramCard({ card, cardProgressPct = 0 }) {
             </article>
             <article>
               <h4 className="section-title">
-                <span className="section-glyph errors" aria-hidden="true">✖</span>
-                Errori
-              </h4>
-              <ul>{(card.mistakes || []).map((item) => <li key={item}>{item}</li>)}</ul>
-            </article>
-            <article>
-              <h4 className="section-title">
                 <span className="section-glyph breathing" aria-hidden="true">🫁</span>
                 Respirazione
               </h4>
               <p>{card.breathing}</p>
+            </article>
+            <article>
+              <h4 className="section-title">
+                <span className="section-glyph errors" aria-hidden="true">✖</span>
+                Errori
+              </h4>
+              <ul>{(card.mistakes || []).map((item) => <li key={item}>{item}</li>)}</ul>
             </article>
           </div>
         </div>
