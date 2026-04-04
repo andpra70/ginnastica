@@ -155,6 +155,13 @@
   background: #fff4fa;
 }
 
+[data-theme='femmina'] .history-day,
+[data-theme='femmina'] .history-event-item,
+[data-theme='femmina'] .history-event-detail {
+  border-color: #e1c2d6;
+  background: #fff4fa;
+}
+
 [data-theme='femmina'] .app-footer {
   border-top-color: #deb8ce;
   color: #7a4a67;
@@ -1079,6 +1086,29 @@ input[type='range'] {
   line-height: 1.12;
 }
 
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.section-glyph {
+  font-weight: 800;
+  line-height: 1;
+}
+
+.section-glyph.execution {
+  color: #1d9b47;
+}
+
+.section-glyph.breathing {
+  color: #1d7cc7;
+}
+
+.section-glyph.errors {
+  color: #c62828;
+}
+
 .vertical-sections article ul {
   margin: 0;
   padding-left: 0.95rem;
@@ -1325,6 +1355,119 @@ input[type='range'] {
   border: 1px solid #d0dceb;
   background: #fff;
   padding: 0.18rem 0.28rem;
+}
+
+.history-calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.history-calendar-head button {
+  border: 1px solid #86a8ca;
+  background: #fff;
+  border-radius: 0;
+  padding: 0.2rem 0.45rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.history-weekdays {
+  margin-top: 0.45rem;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.22rem;
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+}
+
+.history-calendar-grid {
+  margin-top: 0.2rem;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.22rem;
+}
+
+.history-day {
+  min-height: 56px;
+  border: 1px solid #d0dceb;
+  background: #fff;
+  border-radius: 0;
+  padding: 0.22rem;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  align-content: space-between;
+}
+
+.history-day.empty {
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.history-day.has-events {
+  border-color: var(--accent-2);
+  background: #edf7fb;
+}
+
+.history-day.selected {
+  box-shadow: inset 0 0 0 2px var(--accent-2);
+}
+
+.history-day .day-number {
+  font-weight: 700;
+}
+
+.history-day .day-badge {
+  justify-self: end;
+  font-size: 0.72rem;
+  background: var(--accent-2);
+  color: #fff;
+  padding: 0.02rem 0.22rem;
+}
+
+.history-events {
+  margin-top: 0.65rem;
+}
+
+.history-events h4 {
+  margin: 0 0 0.35rem;
+}
+
+.history-event-item {
+  width: 100%;
+  border: 1px solid #d0dceb;
+  background: #fff;
+  border-radius: 0;
+  padding: 0.26rem 0.35rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 0.22rem;
+  cursor: pointer;
+}
+
+.history-event-item.active {
+  border-color: var(--accent-2);
+  box-shadow: inset 0 0 0 1px var(--accent-2);
+}
+
+.history-event-detail {
+  margin-top: 0.55rem;
+  border: 1px solid #d0dceb;
+  background: #fff;
+  padding: 0.45rem;
+}
+
+.history-event-detail h4 {
+  margin: 0 0 0.25rem;
+}
+
+.history-event-detail p {
+  margin: 0.1rem 0;
 }
 
 .inline-video-editor {

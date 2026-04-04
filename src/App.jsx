@@ -18,6 +18,7 @@ const TRAINING_CONFIGS = {
 }
 
 const PROFILE_STORAGE_KEY = 'ginnastica.profile'
+const WORKOUT_HISTORY_STORAGE_KEY = 'ginnastica.workout.history'
 
 function getTodayDateInputValue() {
   const now = new Date()
@@ -42,6 +43,37 @@ function normalizeWeightHistory(entries) {
   const byDate = new Map()
   for (const row of normalized) byDate.set(row.date, row)
   return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function toIsoDateLocal(dateInput) {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function normalizeWorkoutHistory(entries) {
+  if (!Array.isArray(entries)) return []
+  return entries
+    .map((entry) => {
+      const startAt = typeof entry?.startAt === 'string' ? entry.startAt : ''
+      const endAt = typeof entry?.endAt === 'string' ? entry.endAt : ''
+      const durationSec = Number(entry?.durationSec)
+      if (!startAt || !endAt || !Number.isFinite(durationSec)) return null
+      return {
+        id: typeof entry?.id === 'string' ? entry.id : `${startAt}-${endAt}`,
+        startAt,
+        endAt,
+        durationSec: Math.max(0, Math.round(durationSec)),
+        trainingKey: typeof entry?.trainingKey === 'string' ? entry.trainingKey : '',
+        trainingLabel: typeof entry?.trainingLabel === 'string' ? entry.trainingLabel : 'Training',
+        level: typeof entry?.level === 'string' ? entry.level : '',
+        endReason: typeof entry?.endReason === 'string' ? entry.endReason : 'stop'
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.startAt).getTime() - new Date(a.startAt).getTime())
 }
 
 function formatTime(totalSeconds) {
@@ -285,7 +317,18 @@ function readSavedProfile() {
   }
 }
 
-const APP_SECTIONS = ['profile', 'setup', 'training', 'results']
+function readSavedWorkoutHistory() {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(WORKOUT_HISTORY_STORAGE_KEY)
+    if (!raw) return []
+    return normalizeWorkoutHistory(JSON.parse(raw))
+  } catch {
+    return []
+  }
+}
+
+const APP_SECTIONS = ['profile', 'setup', 'training', 'history', 'results']
 
 function CardViewer({ card }) {
   const handleVideoSegmentChange = useCallback(
@@ -369,15 +412,24 @@ function ProgramCard({ card }) {
 
           <div className="vertical-sections">
             <article>
-              <h4>Esecuzione</h4>
+              <h4 className="section-title">
+                <span className="section-glyph execution" aria-hidden="true">✓</span>
+                Esecuzione
+              </h4>
               <ul>{(card.execution || []).map((item) => <li key={item}>{item}</li>)}</ul>
             </article>
             <article>
-              <h4>Errori</h4>
+              <h4 className="section-title">
+                <span className="section-glyph errors" aria-hidden="true">✖</span>
+                Errori
+              </h4>
               <ul>{(card.mistakes || []).map((item) => <li key={item}>{item}</li>)}</ul>
             </article>
             <article>
-              <h4>Respirazione</h4>
+              <h4 className="section-title">
+                <span className="section-glyph breathing" aria-hidden="true">🫁</span>
+                Respirazione
+              </h4>
               <p>{card.breathing}</p>
             </article>
           </div>
@@ -410,7 +462,15 @@ export default function App() {
   const [currentRemaining, setCurrentRemaining] = useState(0)
   const [weightEntryDate, setWeightEntryDate] = useState(() => getTodayDateInputValue())
   const [weightEntryValue, setWeightEntryValue] = useState('')
+  const [workoutHistory, setWorkoutHistory] = useState(() => readSavedWorkoutHistory())
+  const [historyMonth, setHistoryMonth] = useState(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+  })
+  const [selectedHistoryDate, setSelectedHistoryDate] = useState(() => getTodayDateInputValue())
+  const [selectedHistoryEventId, setSelectedHistoryEventId] = useState(null)
   const weightChartRef = useRef(null)
+  const activeWorkoutSessionRef = useRef(null)
 
   const isEditMode = getEditMode()
   const logoSrc = `${import.meta.env.BASE_URL}decathlon.svg`
@@ -468,6 +528,11 @@ export default function App() {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
   }, [profile])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(WORKOUT_HISTORY_STORAGE_KEY, JSON.stringify(workoutHistory))
+  }, [workoutHistory])
 
   useEffect(() => {
     const levelKeys = Object.keys(levels)
@@ -573,6 +638,27 @@ export default function App() {
     if (currentRemaining <= 0) setCurrentRemaining(programCards[playIndex]?.durationScaledSec || 0)
   }, [playMode, totalProgramSec, programCards, playIndex, currentRemaining, selectedCard])
 
+  const completeWorkoutSession = useCallback((endReason = 'stop') => {
+    const session = activeWorkoutSessionRef.current
+    if (!session) return
+    const endMs = Date.now()
+    const durationSec = Math.max(0, Math.round((endMs - session.startMs) / 1000))
+    const event = {
+      id: `${session.startMs}-${endMs}`,
+      startAt: new Date(session.startMs).toISOString(),
+      endAt: new Date(endMs).toISOString(),
+      durationSec,
+      trainingKey: session.trainingKey,
+      trainingLabel: session.trainingLabel,
+      level: session.level,
+      endReason
+    }
+    activeWorkoutSessionRef.current = null
+    setWorkoutHistory((prev) => normalizeWorkoutHistory([event, ...prev]))
+    setSelectedHistoryDate(toIsoDateLocal(event.startAt))
+    setSelectedHistoryEventId(event.id)
+  }, [])
+
   useEffect(() => {
     if (!playMode || !playRunning) return undefined
     const id = window.setInterval(() => {
@@ -582,6 +668,7 @@ export default function App() {
         setPlayIndex((index) => {
           const next = index + 1
           if (next >= programCards.length) {
+            completeWorkoutSession('completed')
             setPlayRunning(false)
             setPlayMode(false)
             return 0
@@ -596,12 +683,18 @@ export default function App() {
       })
     }, 1000)
     return () => window.clearInterval(id)
-  }, [playMode, playRunning, programCards, commitCardDraft])
+  }, [playMode, playRunning, programCards, commitCardDraft, completeWorkoutSession])
 
   const currentCard = playMode ? programCards[playIndex] : selectedCard
 
   const startPlay = () => {
     if (!programCards.length) return
+    activeWorkoutSessionRef.current = {
+      startMs: Date.now(),
+      trainingKey,
+      trainingLabel,
+      level
+    }
     commitCardDraft(selectedCardId)
     setPlayMode(true)
     setPlayRunning(true)
@@ -612,6 +705,7 @@ export default function App() {
   }
 
   const stopPlay = () => {
+    completeWorkoutSession('stop')
     setPlayMode(false)
     setPlayRunning(false)
     setPlayIndex(0)
@@ -742,6 +836,48 @@ export default function App() {
     [profile.pesoHistory]
   )
   const latestWeight = sortedWeightHistory.length ? sortedWeightHistory[sortedWeightHistory.length - 1] : null
+  const sortedWorkoutHistory = useMemo(
+    () => normalizeWorkoutHistory(workoutHistory),
+    [workoutHistory]
+  )
+  const workoutEventsByDate = useMemo(() => {
+    const map = new Map()
+    for (const event of sortedWorkoutHistory) {
+      const dateKey = toIsoDateLocal(event.startAt)
+      if (!map.has(dateKey)) map.set(dateKey, [])
+      map.get(dateKey).push(event)
+    }
+    return map
+  }, [sortedWorkoutHistory])
+  const monthLabel = useMemo(
+    () => historyMonth.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }),
+    [historyMonth]
+  )
+  const calendarCells = useMemo(() => {
+    const year = historyMonth.getFullYear()
+    const month = historyMonth.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const firstWeekday = (firstDay.getDay() + 6) % 7
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const cells = []
+    for (let i = 0; i < firstWeekday; i += 1) cells.push(null)
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const date = new Date(year, month, day)
+      const dateKey = toIsoDateLocal(date)
+      cells.push({
+        dateKey,
+        day,
+        count: (workoutEventsByDate.get(dateKey) || []).length
+      })
+    }
+    return cells
+  }, [historyMonth, workoutEventsByDate])
+  const selectedHistoryEvents = workoutEventsByDate.get(selectedHistoryDate) || []
+  const selectedHistoryEvent = useMemo(() => {
+    if (!selectedHistoryEvents.length) return null
+    if (!selectedHistoryEventId) return selectedHistoryEvents[0]
+    return selectedHistoryEvents.find((event) => event.id === selectedHistoryEventId) || selectedHistoryEvents[0]
+  }, [selectedHistoryEvents, selectedHistoryEventId])
 
   const addOrUpdateWeightEntry = useCallback(() => {
     const date = String(weightEntryDate || '').trim()
@@ -890,6 +1026,7 @@ export default function App() {
                 <button type="button" className={activeView === 'profile' ? 'active' : ''} onClick={() => { setActiveView('profile'); setMenuOpen(false) }}>Profilo</button>
                 <button type="button" className={activeView === 'setup' ? 'active' : ''} onClick={() => { setActiveView('setup'); setMenuOpen(false) }}>Configurazione</button>
                 <button type="button" className={activeView === 'training' ? 'active' : ''} onClick={() => { setActiveView('training'); setMenuOpen(false) }}>{`Training: ${trainingLabel}`}</button>
+                <button type="button" className={activeView === 'history' ? 'active' : ''} onClick={() => { setActiveView('history'); setMenuOpen(false) }}>Storico</button>
                 <button type="button" className={activeView === 'results' ? 'active' : ''} onClick={() => { setActiveView('results'); setMenuOpen(false) }}>Risultati</button>
               </div>
             ) : null}
@@ -901,11 +1038,10 @@ export default function App() {
         <section className="panel compact-panel setup-panel">
           <h3>Profilo</h3>
           <div className="editor-grid">
+            <label>Alias<input value={profile.alias} onChange={(e) => updateProfileField('alias', e.target.value)} /></label>
             <label>Nome<input value={profile.nome} onChange={(e) => updateProfileField('nome', e.target.value)} /></label>
             <label>Cognome<input value={profile.cognome} onChange={(e) => updateProfileField('cognome', e.target.value)} /></label>
-            <label>Alias<input value={profile.alias} onChange={(e) => updateProfileField('alias', e.target.value)} /></label>
             <label>Email<input type="email" value={profile.email} onChange={(e) => updateProfileField('email', e.target.value)} /></label>
-            <label>Altezza (cm)<input type="number" min="0" step="1" value={profile.altezza} onChange={(e) => updateProfileField('altezza', e.target.value)} /></label>
             <label>
               Sesso
               <select value={profile.sesso} onChange={(e) => updateProfileField('sesso', e.target.value)}>
@@ -914,6 +1050,7 @@ export default function App() {
                 <option value="altro">Altro</option>
               </select>
             </label>
+            <label>Altezza (cm)<input type="number" min="0" step="1" value={profile.altezza} onChange={(e) => updateProfileField('altezza', e.target.value)} /></label>
           </div>
           <div className="weight-panel">
             <h4>Peso (storico per data)</h4>
@@ -926,7 +1063,7 @@ export default function App() {
                 Peso (kg)
                 <input type="number" min="1" step="0.1" value={weightEntryValue} onChange={(e) => setWeightEntryValue(e.target.value)} />
               </label>
-              <button type="button" onClick={addOrUpdateWeightEntry}>Salva Peso</button>
+              <button type="button" title="Salva peso" aria-label="Salva peso" onClick={addOrUpdateWeightEntry}>💾</button>
             </div>
             <div className="weight-history-list">
               {sortedWeightHistory.length ? (
@@ -934,7 +1071,7 @@ export default function App() {
                   <div className="weight-history-item" key={row.date}>
                     <span>{row.date}</span>
                     <strong>{row.weight} kg</strong>
-                    <button type="button" onClick={() => removeWeightEntry(row.date)}>Rimuovi</button>
+                    <button type="button" title="Rimuovi peso" aria-label="Rimuovi peso" onClick={() => removeWeightEntry(row.date)}>🗑</button>
                   </div>
                 ))
               ) : (
@@ -989,7 +1126,7 @@ export default function App() {
                     switchSelectedCard(programCards[idx]?.id || '')
                   }}
                 >
-                  ‹
+                  {'<'}
                 </button>
                 <select value={selectedCardId} onChange={(e) => switchSelectedCard(e.target.value)}>
                   {programCards.map((card) => (
@@ -1004,7 +1141,7 @@ export default function App() {
                     switchSelectedCard(programCards[idx]?.id || '')
                   }}
                 >
-                  ›
+                  {'>'}
                 </button>
                 <div className="card-nav-play" aria-label="Controlli playback">
                   {!playMode ? (
@@ -1097,9 +1234,10 @@ export default function App() {
                             type="button"
                             disabled={inUse}
                             title={inUse ? 'Sorgente usata da almeno una scheda' : 'Rimuovi sorgente'}
+                            aria-label={inUse ? 'Sorgente usata da almeno una scheda' : 'Rimuovi sorgente'}
                             onClick={() => setVideoSources((sources) => sources.filter((u) => u !== url))}
                           >
-                            Rimuovi
+                            🗑
                           </button>
                         </div>
                       )
@@ -1112,6 +1250,8 @@ export default function App() {
                       />
                       <button
                         type="button"
+                        title="Aggiungi sorgente"
+                        aria-label="Aggiungi sorgente"
                         onClick={() => {
                           const url = newVideoSource.trim()
                           if (!url) return
@@ -1119,16 +1259,91 @@ export default function App() {
                           setNewVideoSource('')
                         }}
                       >
-                        Aggiungi
+                        💾
                       </button>
                     </div>
                   </div>
                   <div className="editor-actions">
-                    <button type="button" onClick={saveProgramJson}>Salva JSON Programma</button>
+                    <button type="button" title="Salva JSON Programma" aria-label="Salva JSON Programma" onClick={saveProgramJson}>💾</button>
                   </div>
                 </section>
               ) : null}
         </>
+      ) : null}
+
+      {activeView === 'history' ? (
+        <section className="panel compact-panel setup-panel">
+          <h3>Storico Allenamenti</h3>
+          <div className="history-calendar-head">
+            <button
+              type="button"
+              onClick={() => setHistoryMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+            >
+              {'<'}
+            </button>
+            <strong>{monthLabel}</strong>
+            <button
+              type="button"
+              onClick={() => setHistoryMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+            >
+              {'>'}
+            </button>
+          </div>
+          <div className="history-weekdays">
+            <span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span>
+          </div>
+          <div className="history-calendar-grid">
+            {calendarCells.map((cell, idx) => {
+              if (!cell) return <div key={`empty-${idx}`} className="history-day empty" />
+              const isSelected = cell.dateKey === selectedHistoryDate
+              return (
+                <button
+                  type="button"
+                  key={cell.dateKey}
+                  className={`history-day${cell.count ? ' has-events' : ''}${isSelected ? ' selected' : ''}`}
+                  onClick={() => {
+                    setSelectedHistoryDate(cell.dateKey)
+                    setSelectedHistoryEventId((workoutEventsByDate.get(cell.dateKey) || [])[0]?.id || null)
+                  }}
+                >
+                  <span className="day-number">{cell.day}</span>
+                  {cell.count ? <span className="day-badge">{cell.count}</span> : null}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="history-events">
+            <h4>{`Eventi del ${selectedHistoryDate}`}</h4>
+            {selectedHistoryEvents.length ? (
+              selectedHistoryEvents.map((event) => (
+                <button
+                  key={event.id}
+                  type="button"
+                  className={`history-event-item${selectedHistoryEvent?.id === event.id ? ' active' : ''}`}
+                  onClick={() => setSelectedHistoryEventId(event.id)}
+                >
+                  <span>{new Date(event.startAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <strong>{event.trainingLabel}</strong>
+                  <span>{`${formatTime(event.durationSec)}`}</span>
+                </button>
+              ))
+            ) : (
+              <p className="hint">Nessun allenamento registrato in questa data.</p>
+            )}
+          </div>
+
+          {selectedHistoryEvent ? (
+            <div className="history-event-detail">
+              <h4>Dettaglio Evento</h4>
+              <p><strong>Start:</strong> {new Date(selectedHistoryEvent.startAt).toLocaleString('it-IT')}</p>
+              <p><strong>Fine:</strong> {new Date(selectedHistoryEvent.endAt).toLocaleString('it-IT')}</p>
+              <p><strong>Durata:</strong> {formatTime(selectedHistoryEvent.durationSec)}</p>
+              <p><strong>Tipo allenamento:</strong> {selectedHistoryEvent.trainingLabel}</p>
+              <p><strong>Livello allenamento:</strong> {selectedHistoryEvent.level || 'N/D'}</p>
+            </div>
+          ) : null}
+        </section>
       ) : null}
 
       {activeView === 'results' ? (
@@ -1159,8 +1374,8 @@ export default function App() {
 
       <section className="panel compact-panel setup-panel">
         <div className="setup-nav">
-          <button type="button" disabled={!canGoPrev} onClick={goPrevSection}>Indietro</button>
-          <button type="button" disabled={!canGoNext} onClick={goNextSection}>Avanti</button>
+          <button type="button" disabled={!canGoPrev} onClick={goPrevSection}>{'<'}</button>
+          <button type="button" disabled={!canGoNext} onClick={goNextSection}>{'>'}</button>
         </div>
       </section>
 
