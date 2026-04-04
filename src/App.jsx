@@ -4,6 +4,7 @@ import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
 import calistenichsConfig from './config/calistenichs.json'
 import pilatesConfig from './config/pilates.json'
+import yogaDinamicoConfig from './config/yogadinamico.json'
 import modelsConfig from './config/models.json'
 
 const TRAINING_CONFIGS = {
@@ -14,6 +15,10 @@ const TRAINING_CONFIGS = {
   pilates: {
     label: 'Pilates',
     config: pilatesConfig
+  },
+  yogadinamico: {
+    label: 'Yoga Dinamico',
+    config: yogaDinamicoConfig
   }
 }
 

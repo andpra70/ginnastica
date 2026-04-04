@@ -1,0 +1,651 @@
+{
+  "videoSources": [
+    "https://www.youtube.com/watch?v=uTYNPadVdic",
+    "https://www.youtube.com/watch?v=xK5PMmRbs0k"
+  ],
+  "allenamento": {
+    "livelli": {
+      "base": {
+        "label": "Base",
+        "setMultiplier": 1,
+        "durationMultiplier": 1
+      },
+      "intermedio": {
+        "label": "Intermedio",
+        "setMultiplier": 1.2,
+        "durationMultiplier": 1.2
+      },
+      "avanzato": {
+        "label": "Avanzato",
+        "setMultiplier": 1.4,
+        "durationMultiplier": 1.35
+      }
+    },
+    "cards": [
+      {
+        "id": "yoga-warmup-breath-center",
+        "name": "Centratura e Respiro Diaframmatico",
+        "type": "Warmup",
+        "animationType": "plank",
+        "durationSec": 90,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "Posizione stabile in piedi, piedi paralleli e ginocchia morbide.",
+          "Allunga la colonna verso l'alto e rilassa le spalle.",
+          "Porta attenzione al respiro lento e regolare."
+        ],
+        "mistakes": [
+          "Irrigidire cervicale e mandibola.",
+          "Respirare corto e superficiale."
+        ],
+        "breathing": "Inspira dal naso in 4 tempi, espira in 6 tempi.",
+        "viewerType": "video",
+        "classKey": "warmup",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-warmup-cat-cow",
+        "name": "Cat Cow Mobilita Colonna",
+        "type": "Warmup",
+        "animationType": "deadBug",
+        "durationSec": 100,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "In quadrupedia muovi la colonna una vertebra alla volta.",
+          "Alterna estensione e flessione con controllo.",
+          "Distribuisci il peso in modo uniforme su mani e ginocchia."
+        ],
+        "mistakes": [
+          "Movimenti rapidi senza controllo.",
+          "Spingere troppo in zona lombare."
+        ],
+        "breathing": "Inspira in estensione, espira in flessione.",
+        "viewerType": "3d",
+        "classKey": "warmup",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/woman/woman.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-warmup-sunprep",
+        "name": "Preparazione Surya Namaskar",
+        "type": "Warmup",
+        "animationType": "squat",
+        "durationSec": 120,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "Alterna allungamento in alto e piega in avanti morbida.",
+          "Attiva core e mantieni appoggio stabile dei piedi.",
+          "Ritmo fluido senza pause brusche."
+        ],
+        "mistakes": [
+          "Bloccare ginocchia e trattenere il respiro.",
+          "Forzare profondita della piega."
+        ],
+        "breathing": "Inspira in apertura, espira in chiusura.",
+        "viewerType": "video",
+        "classKey": "warmup",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-surya-a",
+        "name": "Surya Namaskar A",
+        "type": "Yoga Dinamico",
+        "animationType": "mountainClimber",
+        "durationSec": 180,
+        "sets": 3,
+        "reps": "3-5 cicli",
+        "execution": [
+          "Sequenza continua: mountain, fold, half lift, plank, cobra, adho mukha.",
+          "Transizioni pulite con attenzione all'allineamento.",
+          "Distribuisci il carico tra arti superiori e inferiori."
+        ],
+        "mistakes": [
+          "Cadere sulle spalle in plank/chaturanga.",
+          "Perdere neutralita lombare nei passaggi veloci."
+        ],
+        "breathing": "Un respiro per movimento: inspira in apertura, espira nelle flessioni.",
+        "viewerType": "3d",
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/sofia/sofia.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 40,
+          "end": 75
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-warrior-flow",
+        "name": "Warrior Flow I-II-Reverse",
+        "type": "Yoga Forza e Stabilita",
+        "animationType": "lunge",
+        "durationSec": 160,
+        "sets": 2,
+        "reps": "6+6 transizioni",
+        "execution": [
+          "Da affondo alto apri in Warrior II e reverse warrior.",
+          "Ginocchio anteriore in asse con il secondo dito del piede.",
+          "Bacino attivo e petto aperto durante la sequenza."
+        ],
+        "mistakes": [
+          "Ginocchio che collassa verso l'interno.",
+          "Spalle rigide e trapezi contratti."
+        ],
+        "breathing": "Inspira in apertura toracica, espira nei cambi direzione.",
+        "viewerType": "3d",
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/woman2/woman2.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 80,
+          "end": 120
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-balance-tree",
+        "name": "Tree Pose Dinamico",
+        "type": "Equilibrio",
+        "animationType": "plank",
+        "durationSec": 120,
+        "sets": 2,
+        "reps": "30s+30s per lato",
+        "execution": [
+          "Appoggio monopodalico con piede in caviglia o interno coscia.",
+          "Attiva core e mantieni sguardo su punto fisso.",
+          "Braccia in alto con spalle rilassate."
+        ],
+        "mistakes": [
+          "Collassare sull'anca di appoggio.",
+          "Trattenere il respiro durante l'equilibrio."
+        ],
+        "breathing": "Respirazione lunga e regolare per stabilizzare.",
+        "viewerType": "video",
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 120,
+          "end": 150
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-core-boat",
+        "name": "Boat Pose Vinyasa",
+        "type": "Core",
+        "animationType": "hollow",
+        "durationSec": 130,
+        "sets": 3,
+        "reps": "8-12",
+        "execution": [
+          "Dalla seduta eleva gambe e busto in V mantenendo colonna lunga.",
+          "Alterna estensione e raccolta mantenendo controllo del core.",
+          "Movimento lento e preciso senza slancio."
+        ],
+        "mistakes": [
+          "Curvare eccessivamente la schiena.",
+          "Compensare con il collo in tensione."
+        ],
+        "breathing": "Espira nella raccolta, inspira nell'estensione.",
+        "viewerType": "3d",
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/man2/man2.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 150,
+          "end": 185
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-flow-downdog-plank",
+        "name": "Down Dog to Plank Wave",
+        "type": "Controllo Scapolare",
+        "animationType": "mountainClimber",
+        "durationSec": 140,
+        "sets": 3,
+        "reps": "10-14",
+        "execution": [
+          "Passa da adho mukha a plank in modo fluido.",
+          "Protrae e deprime le scapole con controllo.",
+          "Mantieni linea testa-bacino-talloni in plank."
+        ],
+        "mistakes": [
+          "Cedere con lombare in plank.",
+          "Caricare eccessivamente i polsi senza attivare il core."
+        ],
+        "breathing": "Inspira in plank, espira tornando in adho mukha.",
+        "viewerType": "3d",
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/woman1/woman1.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 185,
+          "end": 220
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-stretch-pigeon",
+        "name": "Pigeon Stretch",
+        "type": "Stretching",
+        "animationType": "lunge",
+        "durationSec": 140,
+        "sets": 1,
+        "reps": "tenuta alternata",
+        "execution": [
+          "Posiziona tibia anteriore comoda senza forzare il ginocchio.",
+          "Allunga la gamba posteriore mantenendo bacino centrato.",
+          "Progressione: busto alto poi piega in avanti."
+        ],
+        "mistakes": [
+          "Ruotare il bacino lateralmente.",
+          "Spingere oltre la soglia di comfort articolare."
+        ],
+        "breathing": "Espirazioni lunghe per rilasciare il bacino.",
+        "viewerType": "video",
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 220,
+          "end": 250
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-stretch-seated-twist",
+        "name": "Seated Twist",
+        "type": "Stretching",
+        "animationType": "pike",
+        "durationSec": 120,
+        "sets": 1,
+        "reps": "tenuta alternata",
+        "execution": [
+          "Seduto, colonna alta prima della torsione.",
+          "Ruota dal torace mantenendo bacino stabile.",
+          "Alterna i lati in modo simmetrico."
+        ],
+        "mistakes": [
+          "Collassare in cifosi durante la torsione.",
+          "Forzare la rotazione cervicale."
+        ],
+        "breathing": "Inspira per allungare la colonna, espira per approfondire la torsione.",
+        "viewerType": "3d",
+        "classKey": "stretching",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/salsa_dancing/salsa_dancing.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 250,
+          "end": 280
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-relax-savasana",
+        "name": "Savasana Guidato",
+        "type": "Stretching",
+        "animationType": "hollow",
+        "durationSec": 180,
+        "sets": 1,
+        "reps": "tenuta",
+        "execution": [
+          "Posizione supina neutra con arti rilassati.",
+          "Rilascia progressivamente tensioni da piedi a testa.",
+          "Mantieni immobilita e attenzione al respiro."
+        ],
+        "mistakes": [
+          "Contrarre mandibola e spalle.",
+          "Respirazione irregolare e superficiale."
+        ],
+        "breathing": "Respirazione naturale lenta, espirazione leggermente piu lunga.",
+        "viewerType": "video",
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 260,
+          "end": 300
+        },
+        "cameraView": null
+      }
+    ],
+    "warmup": [
+      {
+        "id": "yoga-warmup-breath-center",
+        "name": "Centratura e Respiro Diaframmatico",
+        "type": "Warmup",
+        "animationType": "plank",
+        "durationSec": 90,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "Posizione stabile in piedi, piedi paralleli e ginocchia morbide.",
+          "Allunga la colonna verso l'alto e rilassa le spalle.",
+          "Porta attenzione al respiro lento e regolare."
+        ],
+        "mistakes": [
+          "Irrigidire cervicale e mandibola.",
+          "Respirare corto e superficiale."
+        ],
+        "breathing": "Inspira dal naso in 4 tempi, espira in 6 tempi.",
+        "viewerType": "video",
+        "classKey": "warmup",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-warmup-cat-cow",
+        "name": "Cat Cow Mobilita Colonna",
+        "type": "Warmup",
+        "animationType": "deadBug",
+        "durationSec": 100,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "In quadrupedia muovi la colonna una vertebra alla volta.",
+          "Alterna estensione e flessione con controllo.",
+          "Distribuisci il peso in modo uniforme su mani e ginocchia."
+        ],
+        "mistakes": [
+          "Movimenti rapidi senza controllo.",
+          "Spingere troppo in zona lombare."
+        ],
+        "breathing": "Inspira in estensione, espira in flessione.",
+        "viewerType": "3d",
+        "classKey": "warmup",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/woman/woman.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-warmup-sunprep",
+        "name": "Preparazione Surya Namaskar",
+        "type": "Warmup",
+        "animationType": "squat",
+        "durationSec": 120,
+        "sets": 1,
+        "reps": "continuo",
+        "execution": [
+          "Alterna allungamento in alto e piega in avanti morbida.",
+          "Attiva core e mantieni appoggio stabile dei piedi.",
+          "Ritmo fluido senza pause brusche."
+        ],
+        "mistakes": [
+          "Bloccare ginocchia e trattenere il respiro.",
+          "Forzare profondita della piega."
+        ],
+        "breathing": "Inspira in apertura, espira in chiusura.",
+        "viewerType": "video",
+        "classKey": "warmup",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 0,
+          "end": 20
+        },
+        "cameraView": null
+      }
+    ],
+    "esercizi": [
+      {
+        "id": "yoga-surya-a",
+        "name": "Surya Namaskar A",
+        "type": "Yoga Dinamico",
+        "animationType": "mountainClimber",
+        "durationSec": 180,
+        "sets": 3,
+        "reps": "3-5 cicli",
+        "execution": [
+          "Sequenza continua: mountain, fold, half lift, plank, cobra, adho mukha.",
+          "Transizioni pulite con attenzione all'allineamento.",
+          "Distribuisci il carico tra arti superiori e inferiori."
+        ],
+        "mistakes": [
+          "Cadere sulle spalle in plank/chaturanga.",
+          "Perdere neutralita lombare nei passaggi veloci."
+        ],
+        "breathing": "Un respiro per movimento: inspira in apertura, espira nelle flessioni.",
+        "viewerType": "3d",
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/sofia/sofia.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 40,
+          "end": 75
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-warrior-flow",
+        "name": "Warrior Flow I-II-Reverse",
+        "type": "Yoga Forza e Stabilita",
+        "animationType": "lunge",
+        "durationSec": 160,
+        "sets": 2,
+        "reps": "6+6 transizioni",
+        "execution": [
+          "Da affondo alto apri in Warrior II e reverse warrior.",
+          "Ginocchio anteriore in asse con il secondo dito del piede.",
+          "Bacino attivo e petto aperto durante la sequenza."
+        ],
+        "mistakes": [
+          "Ginocchio che collassa verso l'interno.",
+          "Spalle rigide e trapezi contratti."
+        ],
+        "breathing": "Inspira in apertura toracica, espira nei cambi direzione.",
+        "viewerType": "3d",
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/woman2/woman2.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 80,
+          "end": 120
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-balance-tree",
+        "name": "Tree Pose Dinamico",
+        "type": "Equilibrio",
+        "animationType": "plank",
+        "durationSec": 120,
+        "sets": 2,
+        "reps": "30s+30s per lato",
+        "execution": [
+          "Appoggio monopodalico con piede in caviglia o interno coscia.",
+          "Attiva core e mantieni sguardo su punto fisso.",
+          "Braccia in alto con spalle rilassate."
+        ],
+        "mistakes": [
+          "Collassare sull'anca di appoggio.",
+          "Trattenere il respiro durante l'equilibrio."
+        ],
+        "breathing": "Respirazione lunga e regolare per stabilizzare.",
+        "viewerType": "video",
+        "classKey": "esercizio",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 120,
+          "end": 150
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-core-boat",
+        "name": "Boat Pose Vinyasa",
+        "type": "Core",
+        "animationType": "hollow",
+        "durationSec": 130,
+        "sets": 3,
+        "reps": "8-12",
+        "execution": [
+          "Dalla seduta eleva gambe e busto in V mantenendo colonna lunga.",
+          "Alterna estensione e raccolta mantenendo controllo del core.",
+          "Movimento lento e preciso senza slancio."
+        ],
+        "mistakes": [
+          "Curvare eccessivamente la schiena.",
+          "Compensare con il collo in tensione."
+        ],
+        "breathing": "Espira nella raccolta, inspira nell'estensione.",
+        "viewerType": "3d",
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/man2/man2.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 150,
+          "end": 185
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-flow-downdog-plank",
+        "name": "Down Dog to Plank Wave",
+        "type": "Controllo Scapolare",
+        "animationType": "mountainClimber",
+        "durationSec": 140,
+        "sets": 3,
+        "reps": "10-14",
+        "execution": [
+          "Passa da adho mukha a plank in modo fluido.",
+          "Protrae e deprime le scapole con controllo.",
+          "Mantieni linea testa-bacino-talloni in plank."
+        ],
+        "mistakes": [
+          "Cedere con lombare in plank.",
+          "Caricare eccessivamente i polsi senza attivare il core."
+        ],
+        "breathing": "Inspira in plank, espira tornando in adho mukha.",
+        "viewerType": "3d",
+        "classKey": "esercizio",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/woman1/woman1.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 185,
+          "end": 220
+        },
+        "cameraView": null
+      }
+    ],
+    "stretching": [
+      {
+        "id": "yoga-stretch-pigeon",
+        "name": "Pigeon Stretch",
+        "type": "Stretching",
+        "animationType": "lunge",
+        "durationSec": 140,
+        "sets": 1,
+        "reps": "tenuta alternata",
+        "execution": [
+          "Posiziona tibia anteriore comoda senza forzare il ginocchio.",
+          "Allunga la gamba posteriore mantenendo bacino centrato.",
+          "Progressione: busto alto poi piega in avanti."
+        ],
+        "mistakes": [
+          "Ruotare il bacino lateralmente.",
+          "Spingere oltre la soglia di comfort articolare."
+        ],
+        "breathing": "Espirazioni lunghe per rilasciare il bacino.",
+        "viewerType": "video",
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 220,
+          "end": 250
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-stretch-seated-twist",
+        "name": "Seated Twist",
+        "type": "Stretching",
+        "animationType": "pike",
+        "durationSec": 120,
+        "sets": 1,
+        "reps": "tenuta alternata",
+        "execution": [
+          "Seduto, colonna alta prima della torsione.",
+          "Ruota dal torace mantenendo bacino stabile.",
+          "Alterna i lati in modo simmetrico."
+        ],
+        "mistakes": [
+          "Collassare in cifosi durante la torsione.",
+          "Forzare la rotazione cervicale."
+        ],
+        "breathing": "Inspira per allungare la colonna, espira per approfondire la torsione.",
+        "viewerType": "3d",
+        "classKey": "stretching",
+        "clipName": "mixamo.com",
+        "modelAsset": "/assets3d/actors/salsa_dancing/salsa_dancing.fbx",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=uTYNPadVdic",
+          "start": 250,
+          "end": 280
+        },
+        "cameraView": null
+      },
+      {
+        "id": "yoga-relax-savasana",
+        "name": "Savasana Guidato",
+        "type": "Stretching",
+        "animationType": "hollow",
+        "durationSec": 180,
+        "sets": 1,
+        "reps": "tenuta",
+        "execution": [
+          "Posizione supina neutra con arti rilassati.",
+          "Rilascia progressivamente tensioni da piedi a testa.",
+          "Mantieni immobilita e attenzione al respiro."
+        ],
+        "mistakes": [
+          "Contrarre mandibola e spalle.",
+          "Respirazione irregolare e superficiale."
+        ],
+        "breathing": "Respirazione naturale lenta, espirazione leggermente piu lunga.",
+        "viewerType": "video",
+        "classKey": "stretching",
+        "videoSegment": {
+          "url": "https://www.youtube.com/watch?v=xK5PMmRbs0k",
+          "start": 260,
+          "end": 300
+        },
+        "cameraView": null
+      }
+    ]
+  }
+}
