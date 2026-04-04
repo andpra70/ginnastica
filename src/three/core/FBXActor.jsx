@@ -1,9 +1,25 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Box3, Color, RepeatWrapping, SRGBColorSpace, TextureLoader, Vector3 } from 'three'
 import { useAnimations, useFBX } from '@react-three/drei'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import useClipPlayback from './useClipPlayback'
 import resolveAssetPath from './resolveAssetPath'
+
+const DEFAULT_MAPS = Object.freeze({
+  baseColor: null,
+  normal: null,
+  roughness: null,
+  height: null
+})
+
+const TEXTURE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
+
+const TEXTURE_BASE_NAMES = {
+  baseColor: 'base_color',
+  normal: 'normal',
+  roughness: 'roughness',
+  height: 'height'
+}
 
 function applyPbrTextures(model, maps) {
   model.traverse((node) => {
@@ -33,6 +49,35 @@ function configureMap(texture, isColor = false) {
   texture.wrapT = RepeatWrapping
   texture.flipY = true
   if (isColor) texture.colorSpace = SRGBColorSpace
+}
+
+function disposeMaps(maps) {
+  Object.values(maps || {}).forEach((map) => map?.dispose?.())
+}
+
+function deriveTextureCandidates(resolvedModelPath, configTextures, textureKey) {
+  const explicitPath = configTextures?.[textureKey]
+  if (typeof explicitPath === 'string' && explicitPath.trim()) return [resolveAssetPath(explicitPath.trim())]
+
+  const slashIndex = resolvedModelPath.lastIndexOf('/')
+  if (slashIndex < 0) return []
+  const modelDir = resolvedModelPath.slice(0, slashIndex)
+  const textureDir = `${modelDir}/textures`
+  const baseName = TEXTURE_BASE_NAMES[textureKey]
+  return TEXTURE_EXTENSIONS.map((ext) => `${textureDir}/${baseName}.${ext}`)
+}
+
+async function loadFirstTexture(textureLoader, candidates, isColor = false) {
+  for (const path of candidates) {
+    try {
+      const texture = await textureLoader.loadAsync(path)
+      configureMap(texture, isColor)
+      return texture
+    } catch {
+      // Try next extension candidate.
+    }
+  }
+  return null
 }
 
 function normalizeModelPose(model) {
@@ -102,34 +147,50 @@ export default function FBXActor({ modelPath, config, onModelDebug, playbackCont
   )
   const clipAsset = useFBX(resolvedClipAssetPath)
 
-  const texturePaths = config?.textures || {}
-  const textureList = [
-    texturePaths.baseColor,
-    texturePaths.normal,
-    texturePaths.roughness,
-    texturePaths.height
-  ]
-
-  const [baseColor, normal, roughness, height] = useMemo(
-    () => textureList.map((path) => resolveAssetPath(path)),
-    [texturePaths.baseColor, texturePaths.normal, texturePaths.roughness, texturePaths.height]
-  )
-
+  const texturePaths = config?.textures
   const textureLoader = useMemo(() => new TextureLoader(), [])
+  const [maps, setMaps] = useState(DEFAULT_MAPS)
 
-  const maps = useMemo(() => {
-    const base = baseColor ? textureLoader.load(baseColor) : null
-    const norm = normal ? textureLoader.load(normal) : null
-    const rough = roughness ? textureLoader.load(roughness) : null
-    const h = height ? textureLoader.load(height) : null
+  const textureCandidates = useMemo(() => ({
+    baseColor: deriveTextureCandidates(resolvedModelPath, texturePaths, 'baseColor'),
+    normal: deriveTextureCandidates(resolvedModelPath, texturePaths, 'normal'),
+    roughness: deriveTextureCandidates(resolvedModelPath, texturePaths, 'roughness'),
+    height: deriveTextureCandidates(resolvedModelPath, texturePaths, 'height')
+  }), [
+    resolvedModelPath,
+    texturePaths?.baseColor,
+    texturePaths?.normal,
+    texturePaths?.roughness,
+    texturePaths?.height
+  ])
 
-    configureMap(base, true)
-    configureMap(norm)
-    configureMap(rough)
-    configureMap(h)
+  useEffect(() => {
+    let cancelled = false
 
-    return { baseColor: base, normal: norm, roughness: rough, height: h }
-  }, [textureLoader, baseColor, normal, roughness, height])
+    const run = async () => {
+      const loadedMaps = {
+        baseColor: await loadFirstTexture(textureLoader, textureCandidates.baseColor, true),
+        normal: await loadFirstTexture(textureLoader, textureCandidates.normal),
+        roughness: await loadFirstTexture(textureLoader, textureCandidates.roughness),
+        height: await loadFirstTexture(textureLoader, textureCandidates.height)
+      }
+
+      if (cancelled) {
+        disposeMaps(loadedMaps)
+        return
+      }
+
+      setMaps((currentMaps) => {
+        disposeMaps(currentMaps)
+        return loadedMaps
+      })
+    }
+
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [textureLoader, textureCandidates])
 
   const mergedAnimations = useMemo(() => {
     const local = model.animations || []
@@ -160,6 +221,8 @@ export default function FBXActor({ modelPath, config, onModelDebug, playbackCont
     return () => mixer.stopAllAction()
   }, [mixer])
 
+  useEffect(() => () => disposeMaps(maps), [maps])
+
   const debugPayload = useMemo(
     () => summarizeFbx(model, mergedAnimations, { modelAsset: resolvedModelPath, animationAsset: resolvedClipAssetPath }),
     [model, mergedAnimations, resolvedModelPath, resolvedClipAssetPath]
@@ -173,5 +236,5 @@ export default function FBXActor({ modelPath, config, onModelDebug, playbackCont
   return <primitive object={model} />
 }
 
-useFBX.preload(resolveAssetPath('/assets3d/Man2.fbx'))
-useFBX.preload(resolveAssetPath('/assets3d/claudia/Woman.fbx'))
+useFBX.preload(resolveAssetPath('/assets3d/actors/man2/man2.fbx'))
+useFBX.preload(resolveAssetPath('/assets3d/actors/woman/woman.fbx'))

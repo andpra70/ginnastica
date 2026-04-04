@@ -1,11 +1,12 @@
 # Model Asset (TurboSquid 1812910)
 
-The app currently loads the FBX model and textures from:
+Conventional actor layout:
 
-- `/assets3d/Man2.fbx`
-- `/assets3d/textures/man_basecolor.jpg`
-- `/assets3d/textures/man_normal_opt.jpg`
-- `/assets3d/textures/man_roughness_opt.jpg`
-- `/assets3d/textures/man_height_opt.jpg`
+- `/assets3d/actors/<actor-name>/<actor-name>.fbx`
+- `/assets3d/actors/<actor-name>/textures/base_color.<ext>`
+- `/assets3d/actors/<actor-name>/textures/normal.<ext>`
+- `/assets3d/actors/<actor-name>/textures/roughness.<ext>`
+- `/assets3d/actors/<actor-name>/textures/height.<ext>` (optional)
 
-If you convert to GLB later, update `src/config/exerciseAnimations.json` (`modelAsset`).
+The loader tries extensions in this order: `jpg`, `jpeg`, `png`, `webp`.
+The setup now only needs `modelAsset` (FBX path); textures are auto-resolved by convention.

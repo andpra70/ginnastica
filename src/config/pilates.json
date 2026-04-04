@@ -87,7 +87,7 @@
           "start": 0,
           "end": 20
         },
-        "modelAsset": "/assets3d/claudia/Swing Dancing.fbx"
+        "modelAsset": "/assets3d/actors/swing_dancing/swing_dancing.fbx"
       },
       {
         "id": "pilates-warmup-roll-down",
@@ -286,7 +286,7 @@
           ]
         },
         "clipName": "mixamo.com",
-        "modelAsset": "/assets3d/claudia/Woman2.fbx"
+        "modelAsset": "/assets3d/actors/woman2/woman2.fbx"
       },
       {
         "id": "pilates-spine-stretch",
@@ -463,7 +463,7 @@
           "start": 0,
           "end": 20
         },
-        "modelAsset": "/assets3d/claudia/Swing Dancing.fbx"
+        "modelAsset": "/assets3d/actors/swing_dancing/swing_dancing.fbx"
       },
       {
         "id": "pilates-warmup-roll-down",
@@ -664,7 +664,7 @@
           ]
         },
         "clipName": "mixamo.com",
-        "modelAsset": "/assets3d/claudia/Woman2.fbx"
+        "modelAsset": "/assets3d/actors/woman2/woman2.fbx"
       },
       {
         "id": "pilates-spine-stretch",

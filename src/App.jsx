@@ -3,7 +3,7 @@ import ExerciseRenderer from './three/ExerciseRenderer'
 import ExerciseVideoLoop from './components/ExerciseVideoLoop'
 import calistenichsConfig from './config/calistenichs.json'
 import pilatesConfig from './config/pilates.json'
-import claudiaModelsConfig from './config/claudiaModels.json'
+import modelsConfig from './config/models.json'
 
 const TRAINING_CONFIGS = {
   calistenichs: {
@@ -343,8 +343,8 @@ export default function App() {
   const [clipOptionsByCard, setClipOptionsByCard] = useState({})
   const lastCameraSignatureByCardRef = useRef({})
   const levels = allCfg.livelli || {}
-  const claudiaModelOptions = useMemo(
-    () => [...new Set((claudiaModelsConfig?.models || []).filter((value) => typeof value === 'string' && value.endsWith('.fbx')))],
+  const modelOptions = useMemo(
+    () => [...new Set((modelsConfig?.models || []).filter((value) => typeof value === 'string' && value.endsWith('.fbx')))],
     []
   )
   const levelCfg = levels[level] || Object.values(levels)[0] || { setMultiplier: 1, durationMultiplier: 1 }
@@ -750,9 +750,9 @@ export default function App() {
           </section>
 
           {playMode ? (
-            currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions: claudiaModelOptions }} /> : null
+            currentCard ? <ProgramCard card={{ ...currentCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions }} /> : null
           ) : (
-            selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions: claudiaModelOptions }} /> : null
+            selectedCard ? <ProgramCard card={{ ...selectedCard, onCameraSaved: handleCameraSaved, onClipSelected: handleClipSelected, onClipOptions: handleClipOptions, onVideoSegmentChange: handleVideoSegmentChange, onModelAssetSelected: handleModelAssetSelected, videoSources, isEditMode, theme, modelOptions }} /> : null
           )}
 
           {isEditMode && selectedCard ? (

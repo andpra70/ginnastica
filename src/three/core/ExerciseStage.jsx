@@ -3,7 +3,17 @@ import { Canvas } from '@react-three/fiber'
 import { Bounds, OrbitControls, useBounds } from '@react-three/drei'
 import { Vector3 } from 'three'
 import ModelActor from './ModelActor'
-import animationCfg from '../../config/exerciseAnimations.json'
+
+const DEFAULT_STAGE_CONFIG = {
+  modelAsset: '/assets3d/actors/man2/man2.fbx',
+  default: {
+    playbackRate: 1,
+    loop: 'repeat',
+    camera: [2.1, 1.6, 3.0],
+    target: [0, 1.0, 0],
+    light: 1.1
+  }
+}
 
 function normalizeView(raw) {
   if (!raw || typeof raw !== 'object') return null
@@ -17,13 +27,17 @@ function normalizeView(raw) {
   }
 }
 
-function BoundsAutoFit({ signal }) {
+function BoundsAutoFit({ request }) {
   const bounds = useBounds()
 
   useEffect(() => {
-    if (!signal) return
-    bounds.refresh().clip().fit()
-  }, [signal, bounds])
+    if (!request?.seq) return
+    if (request.withClip) {
+      bounds.refresh().clip().fit()
+      return
+    }
+    bounds.refresh().fit()
+  }, [request, bounds])
 
   return null
 }
@@ -40,41 +54,31 @@ export default function ExerciseStage({
   clipName,
   onClipSelected,
   onClipOptions,
-  theme,
   modelAsset,
   modelOptions,
   onModelAssetSelected
 }) {
-  const cfg = animationCfg.default || {}
+  const cfg = DEFAULT_STAGE_CONFIG.default || {}
   const viewerHostRef = useRef(null)
-  const isFemaleTheme = theme === 'femmina'
   const normalizedModelOptions = useMemo(
     () => (Array.isArray(modelOptions) ? modelOptions.filter((value) => typeof value === 'string' && value.endsWith('.fbx')) : []),
     [modelOptions]
   )
-  const fallbackFemaleModel = normalizedModelOptions[0] || '/assets3d/claudia/Woman.fbx'
-  const selectedFemaleModel = modelAsset && modelAsset.endsWith('.fbx') ? modelAsset : fallbackFemaleModel
-  const modelAssetPath = isFemaleTheme ? selectedFemaleModel : animationCfg.modelAsset
-  const renderCfg = useMemo(() => {
-    if (!isFemaleTheme) return cfg
-    return {
-      ...cfg,
-      textures: {
-        baseColor: '/assets3d/claudia/tex/rp_claudia_rigged_002_dif_opt.jpg',
-        normal: '/assets3d/claudia/tex/rp_claudia_rigged_002_norm_opt.jpg',
-        roughness: '/assets3d/claudia/tex/rp_claudia_rigged_002_gloss_opt.jpg'
-      }
-    }
-  }, [cfg, isFemaleTheme])
+  const fallbackModel = normalizedModelOptions[0] || DEFAULT_STAGE_CONFIG.modelAsset
+  const selectedModel = modelAsset && modelAsset.endsWith('.fbx') ? modelAsset : fallbackModel
+  const modelAssetPath = selectedModel
+  const renderCfg = cfg
   const controlsRef = useRef(null)
   const onCameraSavedRef = useRef(onCameraSaved)
   const onClipSelectedRef = useRef(onClipSelected)
   const onClipOptionsRef = useRef(onClipOptions)
+  const previousModelRef = useRef(null)
+  const shouldAutoPickFirstClipRef = useRef(false)
   const scopedStorageKey = `ginnastica.camera.card.${cardId || 'default'}`
   const [showFbxJson, setShowFbxJson] = useState(false)
   const [fbxDebug, setFbxDebug] = useState(null)
   const [selectedClipName, setSelectedClipName] = useState(clipName || cfg.clip || '')
-  const [autoFitSignal, setAutoFitSignal] = useState(0)
+  const [autoFitRequest, setAutoFitRequest] = useState({ seq: 0, withClip: false })
 
   const fbxJson = useMemo(() => {
     if (!fbxDebug) return ''
@@ -107,16 +111,38 @@ export default function ExerciseStage({
   }, [clipNames])
 
   useEffect(() => {
+    if (previousModelRef.current == null) {
+      previousModelRef.current = selectedModel
+      return
+    }
+    if (previousModelRef.current === selectedModel) return
+    previousModelRef.current = selectedModel
+    shouldAutoPickFirstClipRef.current = true
+    setSelectedClipName('')
+    setFbxDebug(null)
+    setAutoFitRequest((prev) => ({ seq: prev.seq + 1, withClip: true }))
+  }, [selectedModel])
+
+  useEffect(() => {
     setSelectedClipName(clipName || cfg.clip || '')
   }, [clipName, cfg.clip, cardId])
 
   useEffect(() => {
+    if (!shouldAutoPickFirstClipRef.current) return
     if (!clipNames.length) return
+    const firstClip = clipNames[0]
+    shouldAutoPickFirstClipRef.current = false
+    setSelectedClipName(firstClip)
+    onClipSelectedRef.current?.(firstClip)
+  }, [clipNames])
+
+  useEffect(() => {
+    if (!clipNames.length) return
+    if (!selectedClipName) return
     if (clipNames.includes(selectedClipName)) return
-    const preferred = clipNames.includes(clipName) ? clipName : (clipNames.includes(cfg.clip) ? cfg.clip : clipNames[0])
-    setSelectedClipName(preferred)
-    onClipSelectedRef.current?.(preferred)
-  }, [clipNames, selectedClipName, cfg.clip, clipName])
+    setSelectedClipName('')
+    onClipSelectedRef.current?.('')
+  }, [clipNames, selectedClipName])
 
   const resolvedView = useMemo(() => {
     const fromProps = normalizeView(cameraView)
@@ -226,9 +252,9 @@ export default function ExerciseStage({
           <directionalLight position={[3, 4, 3]} intensity={1.2} castShadow />
 
           <Suspense fallback={null}>
-            <Bounds clip margin={3.2}>
-              <BoundsAutoFit signal={autoFitSignal} />
-              <group key={cardId || 'viewer'}>
+            <Bounds margin={3.2}>
+              <BoundsAutoFit request={autoFitRequest} />
+              <group key={`${cardId || 'viewer'}:${selectedModel}`}>
                 <ModelActor
                   modelPath={modelAssetPath}
                   config={renderCfg}
@@ -257,6 +283,18 @@ export default function ExerciseStage({
           <div className="fbx-debug-tools">
             <div className="fbx-play-controls">
               <label>
+                Modello FBX
+                <select
+                  value={selectedModel}
+                  onChange={(event) => onModelAssetSelected?.(event.target.value)}
+                  disabled={!normalizedModelOptions.length}
+                >
+                  {(normalizedModelOptions.length ? normalizedModelOptions : [fallbackModel]).map((path) => (
+                    <option key={path} value={path}>{path.split('/').pop()}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
                 Clip FBX
                 <select
                   value={selectedClipName}
@@ -265,37 +303,19 @@ export default function ExerciseStage({
                     setSelectedClipName(nextClip)
                     onClipSelectedRef.current?.(nextClip)
                   }}
-                  disabled={!clipNames.length}
                 >
-                  {clipNames.length ? (
-                    clipNames.map((name) => (
-                      <option key={name} value={name}>{name}</option>
-                    ))
-                  ) : (
-                    <option value="">Nessuna clip</option>
-                  )}
+                  <option value="">Scegli...</option>
+                  {clipNames.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
                 </select>
               </label>
-              {isFemaleTheme ? (
-                <label>
-                  Modello FBX
-                  <select
-                    value={selectedFemaleModel}
-                    onChange={(event) => onModelAssetSelected?.(event.target.value)}
-                    disabled={!normalizedModelOptions.length}
-                  >
-                    {(normalizedModelOptions.length ? normalizedModelOptions : [fallbackFemaleModel]).map((path) => (
-                      <option key={path} value={path}>{path.split('/').pop()}</option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
               <button
                 type="button"
                 className="fbx-autofit-btn"
                 title="AutoFit camera"
                 aria-label="AutoFit camera"
-                onClick={() => setAutoFitSignal((v) => v + 1)}
+                onClick={() => setAutoFitRequest((prev) => ({ seq: prev.seq + 1, withClip: false }))}
               >
                 ⤢
               </button>

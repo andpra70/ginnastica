@@ -1,0 +1,13 @@
+{
+  "models": [
+    "/assets3d/actors/anime_character/anime_character.fbx",
+    "/assets3d/actors/man/man.fbx",
+    "/assets3d/actors/man2/man2.fbx",
+    "/assets3d/actors/salsa_dancing/salsa_dancing.fbx",
+    "/assets3d/actors/swing_dancing/swing_dancing.fbx",
+    "/assets3d/actors/swing_dancing1/swing_dancing1.fbx",
+    "/assets3d/actors/woman/woman.fbx",
+    "/assets3d/actors/woman1/woman1.fbx",
+    "/assets3d/actors/woman2/woman2.fbx"
+  ]
+}
