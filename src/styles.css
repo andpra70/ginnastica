@@ -977,6 +977,126 @@ input[type='range'] {
   gap: 0.6rem;
 }
 
+.settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+
+.settings-tabs button {
+  border: 1px solid #86a8ca;
+  background: #ffffff;
+  border-radius: 0;
+  padding: 0.28rem 0.35rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-tabs button.active {
+  background: #edf7fb;
+  border-color: #4d86bb;
+  box-shadow: inset 0 -2px 0 #4d86bb;
+}
+
+.settings-panels {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.settings-panel {
+  border: 1px solid #d0dceb;
+  background: #f6f9fd;
+  padding: 0.62rem;
+}
+
+.settings-panel h4 {
+  margin: 0 0 0.5rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+
+.settings-grid label {
+  display: grid;
+  gap: 0.22rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.settings-grid input,
+.settings-grid select {
+  border: 1px solid #86a8ca;
+  background: #fff;
+  padding: 0.18rem 0.22rem;
+  font-family: inherit;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.settings-toggle-row.disabled {
+  opacity: 0.6;
+}
+
+.settings-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
+.settings-switch-input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+}
+
+.settings-switch-track {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #7ea2c8;
+  background: #eaf1f8;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.settings-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #ffffff;
+  border: 1px solid #7ea2c8;
+  transition: transform 0.15s ease;
+}
+
+.settings-switch-input:checked + .settings-switch-track {
+  background: #d9ecff;
+  border-color: #4d86bb;
+}
+
+.settings-switch-input:checked + .settings-switch-track::after {
+  transform: translateX(18px);
+}
+
+@media (max-width: 720px) {
+  .settings-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
 .mini-tab-detail {
   border: 1px solid var(--line);
   padding: 0.6rem;

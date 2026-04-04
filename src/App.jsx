@@ -154,6 +154,33 @@ function clampRange(value, min, max) {
   return Math.max(min, Math.min(max, value))
 }
 
+function pickSpeechVoice(voices, gender) {
+  if (!Array.isArray(voices) || !voices.length) return null
+  const italian = voices.filter((voice) => /(^it[-_]|ital)/i.test(`${voice.lang || ''} ${voice.name || ''}`))
+  const pool = italian.length ? italian : voices
+  const femaleHints = /(female|woman|fem|minnie|chiara|alice|elsa|sara|paola|lucia|giulia)/i
+  const maleHints = /(male|man|mas|luca|marco|giorgio|paolo|roberto|federico)/i
+  const matcher = gender === 'maschio' ? maleHints : femaleHints
+  const preferred = pool.find((voice) => matcher.test(`${voice.name || ''} ${voice.voiceURI || ''}`))
+  return preferred || pool[0] || null
+}
+
+function buildExerciseSpeechText(card, flags = {}) {
+  if (!card) return ''
+  const parts = []
+  parts.push(`Scheda ${card.classKey || 'esercizio'}. ${card.name || ''}`.trim())
+  if (flags.execution && Array.isArray(card.execution) && card.execution.length) {
+    parts.push(`Esecuzione. ${card.execution.join('. ')}`)
+  }
+  if (flags.breathing && typeof card.breathing === 'string' && card.breathing.trim()) {
+    parts.push(`Respirazione. ${card.breathing.trim()}`)
+  }
+  if (flags.errors && Array.isArray(card.mistakes) && card.mistakes.length) {
+    parts.push(`Errori da evitare. ${card.mistakes.join('. ')}`)
+  }
+  return parts.join('. ')
+}
+
 function getEditMode() {
   if (typeof window === 'undefined') return false
   return new URLSearchParams(window.location.search).get('edit') === '1'
@@ -538,6 +565,24 @@ function ProgramCard({ card, cardProgressPct = 0 }) {
   )
 }
 
+function SettingsToggle({ label, checked, onChange, disabled = false }) {
+  return (
+    <label className={`settings-toggle-row${disabled ? ' disabled' : ''}`}>
+      <span>{label}</span>
+      <span className="settings-switch">
+        <input
+          type="checkbox"
+          className="settings-switch-input"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          disabled={disabled}
+        />
+        <span className="settings-switch-track" aria-hidden="true" />
+      </span>
+    </label>
+  )
+}
+
 export default function App() {
   const initialSessionStateRef = useRef(readSavedSessionState())
   const [activeView, setActiveView] = useState(() => {
@@ -581,6 +626,35 @@ export default function App() {
     const stepped = Math.round(raw / 5) * 5
     return clampRange(stepped, 5, 60)
   })
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const raw = getStoredValue('ginnastica.settings.voiceEnabled')
+    if (raw == null || raw === '') return true
+    return raw === '1'
+  })
+  const [voiceGender, setVoiceGender] = useState(() => {
+    if (typeof window === 'undefined') return 'femmina'
+    const raw = String(getStoredValue('ginnastica.settings.voiceGender') || '').trim().toLowerCase()
+    return raw === 'maschio' ? 'maschio' : 'femmina'
+  })
+  const [voiceVolumePct, setVoiceVolumePct] = useState(() => {
+    if (typeof window === 'undefined') return 70
+    const rawStored = getStoredValue('ginnastica.settings.voiceVolumePct')
+    if (rawStored == null || rawStored === '') return 70
+    return clampRange(Number(rawStored), 0, 100)
+  })
+  const [voiceSpeakExecution, setVoiceSpeakExecution] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return getStoredValue('ginnastica.settings.voiceSpeakExecution') === '1'
+  })
+  const [voiceSpeakBreathing, setVoiceSpeakBreathing] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return getStoredValue('ginnastica.settings.voiceSpeakBreathing') === '1'
+  })
+  const [voiceSpeakErrors, setVoiceSpeakErrors] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return getStoredValue('ginnastica.settings.voiceSpeakErrors') === '1'
+  })
   const [level, setLevel] = useState('base')
   const [playMode, setPlayMode] = useState(false)
   const [playRunning, setPlayRunning] = useState(false)
@@ -596,10 +670,12 @@ export default function App() {
   })
   const [selectedHistoryDate, setSelectedHistoryDate] = useState(() => getTodayDateInputValue())
   const [selectedHistoryEventId, setSelectedHistoryEventId] = useState(null)
+  const [settingsTab, setSettingsTab] = useState('video')
   const weightChartRef = useRef(null)
   const activeWorkoutSessionRef = useRef(null)
   const clockAudioContextRef = useRef(null)
   const lastClockTickSecRef = useRef(-1)
+  const lastSpokenCardIdRef = useRef(null)
   const googleButtonHostRef = useRef(null)
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
   const [googleLoginError, setGoogleLoginError] = useState('')
@@ -683,6 +759,30 @@ export default function App() {
   useEffect(() => {
     setStoredValue('ginnastica.settings.clockCadenceSec', String(clockCadenceSec))
   }, [clockCadenceSec])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.voiceEnabled', voiceEnabled ? '1' : '0')
+  }, [voiceEnabled])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.voiceGender', voiceGender)
+  }, [voiceGender])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.voiceVolumePct', String(voiceVolumePct))
+  }, [voiceVolumePct])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.voiceSpeakExecution', voiceSpeakExecution ? '1' : '0')
+  }, [voiceSpeakExecution])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.voiceSpeakBreathing', voiceSpeakBreathing ? '1' : '0')
+  }, [voiceSpeakBreathing])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.voiceSpeakErrors', voiceSpeakErrors ? '1' : '0')
+  }, [voiceSpeakErrors])
 
   useEffect(() => {
     setStoredValue(WORKOUT_HISTORY_STORAGE_KEY, JSON.stringify(workoutHistory))
@@ -941,69 +1041,6 @@ export default function App() {
     setSelectedHistoryEventId(event.id)
   }, [])
 
-  useEffect(() => {
-    if (!playMode || !playRunning) return undefined
-    const id = window.setInterval(() => {
-      setTotalRemaining((v) => Math.max(0, v - 1))
-      setCurrentRemaining((remaining) => {
-        if (remaining > 1) return remaining - 1
-        setPlayIndex((index) => {
-          const next = index + 1
-          if (next >= programCards.length) {
-            completeWorkoutSession('completed')
-            setPlayRunning(false)
-            setPlayMode(false)
-            return 0
-          }
-          const currentCardId = programCards[index]?.id
-          if (currentCardId) commitCardDraft(currentCardId)
-          setCurrentRemaining(programCards[next].durationScaledSec)
-          setSelectedCardId(programCards[next].id)
-          return next
-        })
-        return 0
-      })
-    }, 1000)
-    return () => window.clearInterval(id)
-  }, [playMode, playRunning, programCards, commitCardDraft, completeWorkoutSession])
-
-  const currentCard = playMode ? programCards[playIndex] : selectedCard
-  const programProgressPct = useMemo(() => {
-    if (!playMode || totalProgramSec <= 0) return 0
-    return clampPercent(((totalProgramSec - totalRemaining) / totalProgramSec) * 100)
-  }, [playMode, totalProgramSec, totalRemaining])
-  const currentCardDurationSec = currentCard?.durationScaledSec || 0
-  const currentCardProgressPct = useMemo(() => {
-    if (!playMode || currentCardDurationSec <= 0) return 0
-    return clampPercent(((currentCardDurationSec - currentRemaining) / currentCardDurationSec) * 100)
-  }, [playMode, currentCardDurationSec, currentRemaining])
-
-  const startPlay = () => {
-    if (!programCards.length) return
-    activeWorkoutSessionRef.current = {
-      startMs: Date.now(),
-      trainingKey,
-      trainingLabel,
-      level
-    }
-    commitCardDraft(selectedCardId)
-    setPlayMode(true)
-    setPlayRunning(true)
-    setPlayIndex(0)
-    setSelectedCardId(programCards[0].id)
-    setTotalRemaining(totalProgramSec)
-    setCurrentRemaining(programCards[0].durationScaledSec)
-  }
-
-  const stopPlay = () => {
-    completeWorkoutSession('stop')
-    setPlayMode(false)
-    setPlayRunning(false)
-    setPlayIndex(0)
-    setTotalRemaining(totalProgramSec)
-    setCurrentRemaining(selectedCard?.durationScaledSec || 0)
-  }
-
   const playClockChime = useCallback(async () => {
     if (typeof window === 'undefined') return
     const AudioCtx = window.AudioContext || window.webkitAudioContext
@@ -1049,6 +1086,117 @@ export default function App() {
     pulse(1760, t0 + 0.1, 0.09, 0.95)
   }, [clockEnabled, clockVolumePct])
 
+  const playClockExerciseChangeChime = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return
+    if (!clockEnabled) return
+    const volume = clampRange(clockVolumePct, 0, 100) / 100
+    if (volume <= 0) return
+
+    let ctx = clockAudioContextRef.current
+    if (!ctx) {
+      ctx = new AudioCtx()
+      clockAudioContextRef.current = ctx
+    }
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume()
+      } catch {
+        return
+      }
+    }
+
+    const t0 = ctx.currentTime + 0.01
+    const pulse = (freq, start, len, gainMul = 1) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(freq, start)
+      gain.gain.setValueAtTime(0.0001, start)
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * gainMul), start + 0.005)
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + len)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(start)
+      osc.stop(start + len + 0.01)
+      osc.onended = () => {
+        osc.disconnect()
+        gain.disconnect()
+      }
+    }
+
+    // Double acute cue: same pulse length as base cue, higher frequencies.
+    pulse(2100, t0, 0.08, 0.95)
+    pulse(2450, t0 + 0.1, 0.09, 1.0)
+    pulse(2100, t0 + 0.24, 0.08, 0.95)
+    pulse(2450, t0 + 0.34, 0.09, 1.0)
+  }, [clockEnabled, clockVolumePct])
+
+  useEffect(() => {
+    if (!playMode || !playRunning) return undefined
+    const id = window.setInterval(() => {
+      setTotalRemaining((v) => Math.max(0, v - 1))
+      setCurrentRemaining((remaining) => {
+        if (remaining > 1) return remaining - 1
+        setPlayIndex((index) => {
+          const next = index + 1
+          if (next >= programCards.length) {
+            completeWorkoutSession('completed')
+            setPlayRunning(false)
+            setPlayMode(false)
+            return 0
+          }
+          const currentCardId = programCards[index]?.id
+          if (currentCardId) commitCardDraft(currentCardId)
+          playClockExerciseChangeChime()
+          setCurrentRemaining(programCards[next].durationScaledSec)
+          setSelectedCardId(programCards[next].id)
+          return next
+        })
+        return 0
+      })
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [playMode, playRunning, programCards, commitCardDraft, completeWorkoutSession, playClockExerciseChangeChime])
+
+  const currentCard = playMode ? programCards[playIndex] : selectedCard
+  const programProgressPct = useMemo(() => {
+    if (!playMode || totalProgramSec <= 0) return 0
+    return clampPercent(((totalProgramSec - totalRemaining) / totalProgramSec) * 100)
+  }, [playMode, totalProgramSec, totalRemaining])
+  const currentCardDurationSec = currentCard?.durationScaledSec || 0
+  const currentCardProgressPct = useMemo(() => {
+    if (!playMode || currentCardDurationSec <= 0) return 0
+    return clampPercent(((currentCardDurationSec - currentRemaining) / currentCardDurationSec) * 100)
+  }, [playMode, currentCardDurationSec, currentRemaining])
+
+  const startPlay = () => {
+    if (!programCards.length) return
+    activeWorkoutSessionRef.current = {
+      startMs: Date.now(),
+      trainingKey,
+      trainingLabel,
+      level
+    }
+    commitCardDraft(selectedCardId)
+    setPlayMode(true)
+    setPlayRunning(true)
+    setPlayIndex(0)
+    setSelectedCardId(programCards[0].id)
+    setTotalRemaining(totalProgramSec)
+    setCurrentRemaining(programCards[0].durationScaledSec)
+  }
+
+  const stopPlay = () => {
+    completeWorkoutSession('stop')
+    setPlayMode(false)
+    setPlayRunning(false)
+    setPlayIndex(0)
+    setTotalRemaining(totalProgramSec)
+    setCurrentRemaining(selectedCard?.durationScaledSec || 0)
+  }
+
   useEffect(() => {
     if (!playMode || !playRunning || !clockEnabled) {
       lastClockTickSecRef.current = -1
@@ -1063,6 +1211,51 @@ export default function App() {
   }, [playMode, playRunning, clockEnabled, clockCadenceSec, totalProgramSec, totalRemaining, playClockChime])
 
   useEffect(() => {
+    if (!playMode || !playRunning) {
+      lastSpokenCardIdRef.current = null
+      if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel()
+      return
+    }
+    if (!voiceEnabled) return
+    const card = currentCard
+    if (!card?.id) return
+    if (lastSpokenCardIdRef.current === card.id) return
+    lastSpokenCardIdRef.current = card.id
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+
+    const text = buildExerciseSpeechText(card, {
+      execution: voiceSpeakExecution,
+      breathing: voiceSpeakBreathing,
+      errors: voiceSpeakErrors
+    })
+    if (!text) return
+    const synth = window.speechSynthesis
+    const utterance = new SpeechSynthesisUtterance(text)
+    const selectedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+    if (selectedVoice) {
+      utterance.voice = selectedVoice
+      utterance.lang = selectedVoice.lang || 'it-IT'
+    } else {
+      utterance.lang = 'it-IT'
+    }
+    utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
+    utterance.rate = 1
+    utterance.pitch = voiceGender === 'maschio' ? 0.92 : 1.1
+    synth.cancel()
+    synth.speak(utterance)
+  }, [
+    playMode,
+    playRunning,
+    currentCard,
+    voiceEnabled,
+    voiceGender,
+    voiceVolumePct,
+    voiceSpeakExecution,
+    voiceSpeakBreathing,
+    voiceSpeakErrors
+  ])
+
+  useEffect(() => {
     return () => {
       const ctx = clockAudioContextRef.current
       if (!ctx) return
@@ -1071,6 +1264,7 @@ export default function App() {
       } catch {
         // ignore cleanup errors
       }
+      if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel()
     }
   }, [])
 
@@ -1523,50 +1717,93 @@ export default function App() {
       {activeView === 'settings' ? (
         <section className="panel compact-panel setup-panel">
           <h3 className="section-heading"><span className="section-glyph-icon" aria-hidden="true">⚙</span>Settings</h3>
-          <div className="editor-grid">
-            <label className="toggle-row">
-              <span>Audio video</span>
-              <input
-                type="checkbox"
-                checked={videoAudioEnabled}
-                onChange={(e) => setVideoAudioEnabled(e.target.checked)}
-              />
-            </label>
-            <label className="toggle-row">
-              <span>Clock 15s</span>
-              <input
-                type="checkbox"
-                checked={clockEnabled}
-                onChange={(e) => setClockEnabled(e.target.checked)}
-              />
-            </label>
-            <label>
-              Volume clock: {clockVolumePct}%
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={clockVolumePct}
-                onChange={(e) => setClockVolumePct(clampRange(Number(e.target.value), 0, 100))}
-                disabled={!clockEnabled}
-              />
-            </label>
-            <label>
-              Cadenza clock: {clockCadenceSec}s
-              <input
-                type="range"
-                min="5"
-                max="60"
-                step="5"
-                value={clockCadenceSec}
-                onChange={(e) => setClockCadenceSec(clampRange(Number(e.target.value), 5, 60))}
-                disabled={!clockEnabled}
-              />
-            </label>
+          <div className="settings-tabs" role="tablist" aria-label="Gruppi settings">
+            <button type="button" className={settingsTab === 'video' ? 'active' : ''} onClick={() => setSettingsTab('video')}>Video</button>
+            <button type="button" className={settingsTab === 'clock' ? 'active' : ''} onClick={() => setSettingsTab('clock')}>Clock</button>
+            <button type="button" className={settingsTab === 'voice' ? 'active' : ''} onClick={() => setSettingsTab('voice')}>Vocale</button>
           </div>
-          <p className="hint">{videoAudioEnabled ? 'Audio video abilitato.' : 'Audio video disabilitato (default).'}</p>
-          <p className="hint">{clockEnabled ? `Clock attivo: beep ogni ${clockCadenceSec} secondi (volume ${clockVolumePct}%).` : 'Clock disabilitato.'}</p>
+
+          <div className="settings-panels">
+            {settingsTab === 'video' ? (
+              <div className="settings-panel">
+                <h4>Video</h4>
+                <div className="settings-grid">
+                  <SettingsToggle label="Audio video" checked={videoAudioEnabled} onChange={setVideoAudioEnabled} />
+                </div>
+                <p className="hint">{videoAudioEnabled ? 'Audio video abilitato.' : 'Audio video disabilitato (default).'}</p>
+              </div>
+            ) : null}
+
+            {settingsTab === 'clock' ? (
+              <div className="settings-panel">
+                <h4>Clock</h4>
+                <div className="settings-grid">
+                  <SettingsToggle label="Clock attivo" checked={clockEnabled} onChange={setClockEnabled} />
+                  <label>
+                    Volume clock: {clockVolumePct}%
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={clockVolumePct}
+                      onChange={(e) => setClockVolumePct(clampRange(Number(e.target.value), 0, 100))}
+                      disabled={!clockEnabled}
+                    />
+                  </label>
+                  <label>
+                    Cadenza clock: {clockCadenceSec}s
+                    <input
+                      type="range"
+                      min="5"
+                      max="60"
+                      step="5"
+                      value={clockCadenceSec}
+                      onChange={(e) => setClockCadenceSec(clampRange(Number(e.target.value), 5, 60))}
+                      disabled={!clockEnabled}
+                    />
+                  </label>
+                </div>
+                <p className="hint">{clockEnabled ? `Clock attivo: beep ogni ${clockCadenceSec} secondi (volume ${clockVolumePct}%).` : 'Clock disabilitato.'}</p>
+              </div>
+            ) : null}
+
+            {settingsTab === 'voice' ? (
+              <div className="settings-panel">
+                <h4>Vocale</h4>
+                <div className="settings-grid">
+                  <SettingsToggle label="Vocale attivo" checked={voiceEnabled} onChange={setVoiceEnabled} />
+                  <label>
+                    Voce
+                    <select
+                      value={voiceGender}
+                      onChange={(e) => setVoiceGender(e.target.value === 'maschio' ? 'maschio' : 'femmina')}
+                      disabled={!voiceEnabled}
+                    >
+                      <option value="femmina">Femmina</option>
+                      <option value="maschio">Maschio</option>
+                    </select>
+                  </label>
+                  <label>
+                    Volume voce: {voiceVolumePct}%
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={voiceVolumePct}
+                      onChange={(e) => setVoiceVolumePct(clampRange(Number(e.target.value), 0, 100))}
+                      disabled={!voiceEnabled}
+                    />
+                  </label>
+                  <SettingsToggle label="Leggi Esecuzione" checked={voiceSpeakExecution} onChange={setVoiceSpeakExecution} disabled={!voiceEnabled} />
+                  <SettingsToggle label="Leggi Respirazione" checked={voiceSpeakBreathing} onChange={setVoiceSpeakBreathing} disabled={!voiceEnabled} />
+                  <SettingsToggle label="Leggi Errori" checked={voiceSpeakErrors} onChange={setVoiceSpeakErrors} disabled={!voiceEnabled} />
+                </div>
+                <p className="hint">{voiceEnabled ? `Vocale attivo (${voiceGender}, volume ${voiceVolumePct}%).` : 'Vocale disabilitato.'}</p>
+              </div>
+            ) : null}
+          </div>
         </section>
       ) : null}
 
