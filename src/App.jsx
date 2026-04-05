@@ -683,6 +683,10 @@ export default function App() {
     if (raw == null || raw === '') return true
     return raw === '1'
   })
+  const [audioKeepAlive, setAudioKeepAlive] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return getStoredValue('ginnastica.settings.audioKeepAlive') === '1'
+  })
   const [level, setLevel] = useState('base')
   const [playMode, setPlayMode] = useState(false)
   const [playRunning, setPlayRunning] = useState(false)
@@ -702,12 +706,15 @@ export default function App() {
   const weightChartRef = useRef(null)
   const activeWorkoutSessionRef = useRef(null)
   const clockAudioContextRef = useRef(null)
+  const keepAliveOscRef = useRef(null)
+  const keepAliveGainRef = useRef(null)
   const lastClockTickSecRef = useRef(-1)
   const lastSpokenCardIdRef = useRef(null)
   const googleButtonHostRef = useRef(null)
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false)
   const [googleLoginError, setGoogleLoginError] = useState('')
   const speakingTokenRef = useRef(0)
+  const wakeLockRef = useRef(null)
 
   const isEditMode = getEditMode()
   const googleEnabled = useMemo(() => parseGoogleFlagFromUrl(), [])
@@ -812,6 +819,10 @@ export default function App() {
   useEffect(() => {
     setStoredValue('ginnastica.settings.voiceSpeakBreathing', voiceSpeakBreathing ? '1' : '0')
   }, [voiceSpeakBreathing])
+
+  useEffect(() => {
+    setStoredValue('ginnastica.settings.audioKeepAlive', audioKeepAlive ? '1' : '0')
+  }, [audioKeepAlive])
 
   useEffect(() => {
     setStoredValue('ginnastica.settings.voiceSpeakErrors', voiceSpeakErrors ? '1' : '0')
@@ -1166,9 +1177,123 @@ export default function App() {
     pulse(2450, t0 + 0.34, 0.09, 1.0)
   }, [clockEnabled, clockVolumePct])
 
-  const playVoiceSample = useCallback(() => {
+  const stopSilentKeepAlive = useCallback(() => {
+    const osc = keepAliveOscRef.current
+    const gain = keepAliveGainRef.current
+    if (osc) {
+      try {
+        osc.stop()
+      } catch {
+        // ignore stop errors
+      }
+      try {
+        osc.disconnect()
+      } catch {
+        // ignore disconnect errors
+      }
+      keepAliveOscRef.current = null
+    }
+    if (gain) {
+      try {
+        gain.disconnect()
+      } catch {
+        // ignore disconnect errors
+      }
+      keepAliveGainRef.current = null
+    }
+  }, [])
+
+  const startSilentKeepAlive = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return
+    let ctx = clockAudioContextRef.current
+    if (!ctx) {
+      ctx = new AudioCtx()
+      clockAudioContextRef.current = ctx
+    }
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume()
+      } catch {
+        // ignore: browser may still block outside explicit user gesture
+      }
+    }
+    if (keepAliveOscRef.current || keepAliveGainRef.current) return
+
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(0.000001, ctx.currentTime)
+    gain.connect(ctx.destination)
+
+    const osc = ctx.createOscillator()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(440, ctx.currentTime)
+    osc.connect(gain)
+    osc.start()
+
+    keepAliveGainRef.current = gain
+    keepAliveOscRef.current = osc
+  }, [])
+
+  const ensureClockAudioReady = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return
+    let ctx = clockAudioContextRef.current
+    if (!ctx) {
+      ctx = new AudioCtx()
+      clockAudioContextRef.current = ctx
+    }
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume()
+      } catch {
+        // ignore: browser may still block outside explicit user gesture
+      }
+    }
+    if (audioKeepAlive) {
+      await startSilentKeepAlive()
+    }
+    if (window.speechSynthesis) {
+      try {
+        window.speechSynthesis.resume()
+      } catch {
+        // ignore resume errors
+      }
+    }
+  }, [audioKeepAlive, startSilentKeepAlive])
+
+  const requestScreenWakeLock = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const wakeLockApi = navigator?.wakeLock
+    if (!wakeLockApi?.request) return
+    if (wakeLockRef.current && !wakeLockRef.current.released) return
+    try {
+      const sentinel = await wakeLockApi.request('screen')
+      wakeLockRef.current = sentinel
+      sentinel.addEventListener('release', () => {
+        if (wakeLockRef.current === sentinel) wakeLockRef.current = null
+      })
+    } catch {
+      // ignore wake lock errors (unsupported or blocked by browser policy)
+    }
+  }, [])
+
+  const releaseScreenWakeLock = useCallback(async () => {
+    const sentinel = wakeLockRef.current
+    wakeLockRef.current = null
+    if (!sentinel?.release) return
+    try {
+      await sentinel.release()
+    } catch {
+      // ignore release errors
+    }
+  }, [])
+
+  const playVoiceSample = useCallback(async () => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
     if (!voiceEnabled) return
+    await ensureClockAudioReady()
     const synth = window.speechSynthesis
     const utterance = new SpeechSynthesisUtterance('voce attiva')
     const speakWithVoice = (voice) => {
@@ -1177,7 +1302,11 @@ export default function App() {
       utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
       utterance.rate = 1
       utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
-      synth.cancel()
+      try {
+        synth.resume()
+      } catch {
+        // ignore resume errors
+      }
       synth.speak(utterance)
     }
     const directVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
@@ -1200,25 +1329,18 @@ export default function App() {
       const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
       speakWithVoice(delayedVoice)
     }, 600)
-  }, [voiceEnabled, voiceGender, voiceVolumePct])
+  }, [voiceEnabled, voiceGender, voiceVolumePct, ensureClockAudioReady])
 
-  const ensureClockAudioReady = useCallback(async () => {
-    if (typeof window === 'undefined') return
-    const AudioCtx = window.AudioContext || window.webkitAudioContext
-    if (!AudioCtx) return
-    let ctx = clockAudioContextRef.current
-    if (!ctx) {
-      ctx = new AudioCtx()
-      clockAudioContextRef.current = ctx
-    }
-    if (ctx.state === 'suspended') {
-      try {
-        await ctx.resume()
-      } catch {
-        // ignore: browser may still block outside explicit user gesture
+  useEffect(() => {
+    if (audioKeepAlive && playMode && playRunning) {
+      void startSilentKeepAlive()
+      return () => {
+        if (!audioKeepAlive) stopSilentKeepAlive()
       }
     }
-  }, [])
+    stopSilentKeepAlive()
+    return undefined
+  }, [audioKeepAlive, playMode, playRunning, startSilentKeepAlive, stopSilentKeepAlive])
 
   useEffect(() => {
     if (!playMode || !playRunning) return undefined
@@ -1311,46 +1433,63 @@ export default function App() {
     lastSpokenCardIdRef.current = card.id
     if (typeof window === 'undefined' || !window.speechSynthesis) return
 
-    const text = buildExerciseSpeechText(card, {
-      execution: voiceSpeakExecution,
-      breathing: voiceSpeakBreathing,
-      errors: voiceSpeakErrors
-    })
-    if (!text) return
-    const synth = window.speechSynthesis
-    const utterance = new SpeechSynthesisUtterance(text)
-    const speakWithVoice = (voice) => {
-      utterance.lang = 'it-IT'
-      if (voice) utterance.voice = voice
-      utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
-      utterance.rate = 1
-      utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
-      synth.cancel()
-      synth.speak(utterance)
+    let timeoutId = 0
+    let hasCleanup = false
+    const handleSpeech = async () => {
+      await ensureClockAudioReady()
+      if (hasCleanup) return
+
+      const text = buildExerciseSpeechText(card, {
+        execution: voiceSpeakExecution,
+        breathing: voiceSpeakBreathing,
+        errors: voiceSpeakErrors
+      })
+      if (!text) return
+      const synth = window.speechSynthesis
+      const utterance = new SpeechSynthesisUtterance(text)
+      const speakWithVoice = (voice) => {
+        utterance.lang = 'it-IT'
+        if (voice) utterance.voice = voice
+        utterance.volume = clampRange(voiceVolumePct, 0, 100) / 100
+        utterance.rate = 1
+        utterance.pitch = voiceGender === 'maschio' ? 0.72 : 1.06
+        try {
+          synth.resume()
+        } catch {
+          // ignore resume errors
+        }
+        synth.speak(utterance)
+      }
+      const directVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+      if (directVoice) {
+        speakWithVoice(directVoice)
+        return
+      }
+      const token = Date.now()
+      speakingTokenRef.current = token
+      const onVoicesChanged = () => {
+        if (speakingTokenRef.current !== token) return
+        synth.removeEventListener('voiceschanged', onVoicesChanged)
+        const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+        speakWithVoice(delayedVoice)
+      }
+      synth.addEventListener('voiceschanged', onVoicesChanged)
+      timeoutId = window.setTimeout(() => {
+        if (speakingTokenRef.current !== token) return
+        synth.removeEventListener('voiceschanged', onVoicesChanged)
+        const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
+        speakWithVoice(delayedVoice)
+      }, 600)
     }
-    const directVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
-    if (directVoice) {
-      speakWithVoice(directVoice)
-      return
-    }
-    const token = Date.now()
-    speakingTokenRef.current = token
-    const onVoicesChanged = () => {
-      if (speakingTokenRef.current !== token) return
-      synth.removeEventListener('voiceschanged', onVoicesChanged)
-      const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
-      speakWithVoice(delayedVoice)
-    }
-    synth.addEventListener('voiceschanged', onVoicesChanged)
-    const timeoutId = window.setTimeout(() => {
-      if (speakingTokenRef.current !== token) return
-      synth.removeEventListener('voiceschanged', onVoicesChanged)
-      const delayedVoice = pickSpeechVoice(synth.getVoices(), voiceGender)
-      speakWithVoice(delayedVoice)
-    }, 600)
+
+    void handleSpeech()
+
     return () => {
-      synth.removeEventListener('voiceschanged', onVoicesChanged)
-      window.clearTimeout(timeoutId)
+      hasCleanup = true
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+      if (timeoutId) window.clearTimeout(timeoutId)
     }
   }, [
     playMode,
@@ -1361,11 +1500,66 @@ export default function App() {
     voiceVolumePct,
     voiceSpeakExecution,
     voiceSpeakBreathing,
-    voiceSpeakErrors
+    voiceSpeakErrors,
+    ensureClockAudioReady
   ])
 
   useEffect(() => {
+    if (!playMode || !playRunning || !voiceEnabled) return undefined
+    if (typeof window === 'undefined' || !window.speechSynthesis) return undefined
+    const synth = window.speechSynthesis
+    const resumeVoice = () => {
+      try {
+        synth.resume()
+      } catch {
+        // ignore resume errors
+      }
+    }
+
+    const visibilityHandler = () => {
+      resumeVoice()
+    }
+
+    const focusHandler = () => {
+      resumeVoice()
+    }
+
+    resumeVoice()
+    const intervalId = window.setInterval(resumeVoice, 1200)
+    document.addEventListener('visibilitychange', visibilityHandler)
+    window.addEventListener('focus', focusHandler)
+
     return () => {
+      window.clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', visibilityHandler)
+      window.removeEventListener('focus', focusHandler)
+    }
+  }, [playMode, playRunning, voiceEnabled])
+
+  useEffect(() => {
+    if (!playMode || !playRunning) {
+      void releaseScreenWakeLock()
+      return undefined
+    }
+
+    void requestScreenWakeLock()
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && playMode && playRunning) {
+        void requestScreenWakeLock()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      void releaseScreenWakeLock()
+    }
+  }, [playMode, playRunning, requestScreenWakeLock, releaseScreenWakeLock])
+
+  useEffect(() => {
+    return () => {
+      void releaseScreenWakeLock()
+      stopSilentKeepAlive()
       const ctx = clockAudioContextRef.current
       if (!ctx) return
       try {
@@ -1375,7 +1569,7 @@ export default function App() {
       }
       if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel()
     }
-  }, [])
+  }, [releaseScreenWakeLock, stopSilentKeepAlive])
 
   useEffect(() => {
     const snapshot = {
@@ -1838,6 +2032,11 @@ export default function App() {
                 <h4>Video</h4>
                 <div className="settings-grid">
                   <SettingsToggle label="Audio video" checked={videoAudioEnabled} onChange={setVideoAudioEnabled} />
+                  <SettingsToggle
+                    label="Loop audio silenzioso offscreen"
+                    checked={audioKeepAlive}
+                    onChange={setAudioKeepAlive}
+                  />
                   <label>
                     Volume video: {videoVolumePct}%
                     <input
@@ -1852,6 +2051,7 @@ export default function App() {
                   </label>
                 </div>
                 <p className="hint">{videoAudioEnabled ? `Audio video abilitato (volume ${videoVolumePct}%).` : 'Audio video disabilitato (default).'}</p>
+                <p className="hint">{audioKeepAlive ? 'Audio silenzioso attivo per aumentare la probabilità che il suono e lo speech restino attivi a schermo spento.' : 'Disabilita audio silenzioso offscreen se non vuoi mantenere la sessione audio attiva.'}</p>
               </div>
             ) : null}
 
